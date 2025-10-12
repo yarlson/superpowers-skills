@@ -1,8 +1,8 @@
 ---
 name: Building Type-Safe HTML with plainkit/html
 description: Master plainkit/html's function-based HTML generation with compile-time type safety, proper composition patterns, and attribute helpers
-when_to_use: When working with plainkit/html library to build Go HTML components - includes element creation, attributes, children handling, and composition
-version: 1.0.0
+when_to_use: When working with plainkit/html library to build Go HTML components - element creation, attributes, children handling, composition. For SVG see skills/plainkit/svg, for icons see skills/plainkit/icons.
+version: 2.0.0
 ---
 
 # Building Type-Safe HTML with plainkit/html
@@ -12,6 +12,10 @@ version: 1.0.0
 plainkit/html is a function-based HTML component library for Go that generates HTML at compile time with zero runtime overhead and full type safety. Each HTML element is a typed function that only accepts valid attributes through interface-based composition.
 
 **Core principle:** Use compile-time type safety to prevent invalid HTML structures before runtime.
+
+**Related skills:**
+- skills/plainkit/svg - SVG elements and attributes
+- skills/plainkit/icons - Lucide icons library
 
 ## Quick Reference
 
@@ -71,36 +75,6 @@ Fragment(
     Div(T("First")),
     P(T("Second")),
 )                               // Or use F() shorthand
-```
-
-### SVG Elements and Attributes
-
-```go
-// SVG elements (prefixed with Svg)
-Svg(...)           // Root SVG element
-SvgCircle(...)     // Circle
-SvgPath(...)       // Path
-SvgRect(...)       // Rectangle
-SvgLine(...)       // Line
-SvgPolygon(...)    // Polygon
-SvgPolyline(...)   // Polyline
-SvgEllipse(...)    // Ellipse
-
-// SVG geometry attributes
-ACx("50"), ACy("50")    // Circle center
-AR("40")                // Circle radius
-AD("M10 10 L90 90")     // Path data
-AX("0"), AY("0")        // Position
-
-// SVG visual attributes
-AFill("blue")           // Fill color
-AStroke("red")          // Stroke color
-AStrokeWidth("2")       // Stroke width
-AViewBox("0 0 24 24")   // ViewBox
-
-// Lucide icons (recommended for complex SVG)
-lucide.Heart(lucide.Size("24"))
-lucide.Menu(html.AClass("icon"))
 ```
 
 ## Core Architecture
@@ -167,8 +141,8 @@ A(ARequired())            // Required not valid for A
 
 **UnsafeText() - Raw HTML:**
 - Pre-sanitized HTML from trusted sources
-- SVG content
 - Generated HTML from other libraries
+- Use with caution
 
 **Child() / C() - Single component:**
 - Passing one component as child
@@ -505,11 +479,10 @@ When building with plainkit/html:
 - [ ] Use `AData()` for data-* attributes
 - [ ] Use `AAria()` for aria-* attributes
 - [ ] Use `ACustom()` for framework-specific attributes (htmx, alpine)
-- [ ] Use `Svg` prefix for SVG elements (`SvgCircle`, `SvgPath`, etc.)
-- [ ] Use SVG-specific attributes (`ACx`, `ACy`, `AR`, `AD`, `AFill`, `AStroke`)
-- [ ] Use `lucide.IconName()` for pre-built icons from Lucide library
-- [ ] Use `lucide.Size()` for uniform icon sizing
 - [ ] Test components by rendering to string
+
+**For SVG:** See skills/plainkit/svg
+**For Icons:** See skills/plainkit/icons
 
 ## Anti-Patterns to Avoid
 
@@ -520,290 +493,6 @@ When building with plainkit/html:
 ❌ **Don't** spread non-slice variables (`...` only works on slices)
 ❌ **Don't** create wrapper divs unnecessarily (use `Fragment()`)
 
-## SVG Support
-
-### SVG Element Naming
-
-SVG elements are prefixed with `Svg` to avoid naming conflicts with HTML elements:
-
-```go
-// SVG elements use Svg prefix
-Svg(...)           // <svg> element (root)
-SvgCircle(...)     // <circle> element
-SvgPath(...)       // <path> element
-SvgRect(...)       // <rect> element
-SvgLine(...)       // <line> element
-SvgPolygon(...)    // <polygon> element
-SvgPolyline(...)   // <polyline> element
-SvgEllipse(...)    // <ellipse> element
-
-// Note: SvgG, SvgText, and nested SVG elements have limited support
-// See "SVG Composition Limitation" section below
-```
-
-### SVG-Specific Attributes
-
-SVG elements use dedicated attribute helpers for SVG-specific attributes:
-
-```go
-// Geometry attributes
-ACx("50")           // cx (center x for circle/ellipse)
-ACy("50")           // cy (center y for circle/ellipse)
-AR("40")            // r (radius for circle)
-ARx("30")           // rx (x-axis radius)
-ARy("20")           // ry (y-axis radius)
-AX("10")            // x position
-AY("10")            // y position
-AX1("0"), AY1("0")  // line start
-AX2("100"), AY2("100") // line end
-
-// Path data
-AD("M 10 10 L 90 90")  // d (path data)
-
-// Visual attributes
-AFill("red")           // fill color
-AFillOpacity("0.5")    // fill opacity
-AStroke("blue")        // stroke color
-AStrokeWidth("2")      // stroke width
-AStrokeLinecap("round") // stroke line cap
-AStrokeLinejoin("round") // stroke line join
-AStrokeDasharray("5,5") // stroke dash pattern
-AOpacity("0.8")        // overall opacity
-
-// Text attributes (for SvgText)
-ATextAnchor("middle")  // text alignment (start, middle, end)
-AFontSize("14")        // font size
-AFontFamily("Arial")   // font family
-AFontWeight("bold")    // font weight
-
-// Transform and viewBox
-ATransform("rotate(45)") // transform
-AViewBox("0 0 100 100")  // viewBox
-APreserveAspectRatio("xMidYMid meet") // aspect ratio
-
-// Namespace (for root svg element)
-AXmlns("http://www.w3.org/2000/svg") // xmlns
-```
-
-### SVG Usage Pattern
-
-```go
-// Basic SVG with circle
-icon := Svg(
-    AViewBox("0 0 100 100"),
-    AWidth("100"),
-    AHeight("100"),
-    AXmlns("http://www.w3.org/2000/svg"),
-    SvgCircle(
-        ACx("50"),
-        ACy("50"),
-        AR("40"),
-        AFill("blue"),
-        AStroke("black"),
-        AStrokeWidth("2"),
-    ),
-)
-
-// SVG path example
-checkmark := Svg(
-    AViewBox("0 0 24 24"),
-    AWidth("24"),
-    AHeight("24"),
-    SvgPath(
-        AD("M20 6L9 17l-5-5"),
-        AFill("none"),
-        AStroke("currentColor"),
-        AStrokeWidth("2"),
-        AStrokeLinecap("round"),
-        AStrokeLinejoin("round"),
-    ),
-)
-```
-
-**SVG Composition Limitation:**
-
-The current PlainKit HTML implementation has limited support for nested SVG elements. Child SVG elements (like `SvgRect`, `SvgText`) cannot be directly passed to parent SVG elements (like `SvgG`) because `Node` does not implement the required `ApplyG`, `ApplyText`, etc. methods.
-
-For complex SVG compositions with groups and nested elements, use the Lucide icons library which provides pre-built, tested SVG components, or construct SVG as a string using `UnsafeText()`.
-
-### SVG Type System
-
-SVG elements have their own Arg interfaces, separate from HTML elements:
-
-```go
-// Each SVG element has specific Arg interface
-type SvgCircleArg interface {
-    ApplyCircle(*SvgCircleAttrs, *[]Component)
-}
-
-type SvgPathArg interface {
-    ApplyPath(*SvgPathAttrs, *[]Component)
-}
-
-// Global attributes work with SVG elements
-Svg(
-    AClass("icon"),              // ✅ Global attribute
-    AId("my-svg"),               // ✅ Global attribute
-    AData("icon-type", "user"),  // ✅ Global attribute
-    AFill("blue"),               // ✅ SVG-specific attribute
-)
-```
-
-## Lucide Icons Library
-
-PlainKit includes a comprehensive icon library at `github.com/plainkit/icons/lucide` with 1000+ icons from Lucide.
-
-### Basic Usage
-
-```go
-import (
-    "github.com/plainkit/html"
-    "github.com/plainkit/icons/lucide"
-)
-
-// Use icon with default size (24x24)
-icon := lucide.Heart()
-
-// Customize with attributes
-icon := lucide.Heart(
-    lucide.Size("16"),           // Resize to 16x16
-    html.AClass("text-red-500"), // Add CSS class
-)
-
-// Icons work with any SvgArg
-icon := lucide.Activity(
-    lucide.Size("32"),
-    html.AStroke("blue"),
-    html.AStrokeWidth("3"),
-    html.AClass("animate-pulse"),
-)
-```
-
-### Size Helper
-
-The `Size()` helper uniformly sets both width and height:
-
-```go
-lucide.Star(lucide.Size("20"))  // 20x20
-lucide.Heart(lucide.Size("48")) // 48x48
-
-// Without Size(), set individually:
-lucide.Star(html.AWidth("20"), html.AHeight("20"))
-```
-
-### Icon Defaults
-
-All Lucide icons come with sensible defaults:
-- **Size**: 24x24 pixels
-- **ViewBox**: "0 0 24 24"
-- **Fill**: "none"
-- **Stroke**: "currentColor" (inherits text color)
-- **Stroke Width**: "2"
-- **Stroke Linecap**: "round"
-- **Stroke Linejoin**: "round"
-- **Class**: "lucide lucide-{icon-name}"
-
-```go
-// Icon inherits text color via currentColor
-Div(
-    AClass("text-blue-500"),  // Text color
-    lucide.Heart(),           // Icon will be blue
-)
-
-// Override defaults
-lucide.Heart(
-    html.AStroke("red"),      // Override stroke color
-    html.AFill("pink"),       // Override fill
-    html.AStrokeWidth("3"),   // Override stroke width
-)
-```
-
-### Available Icons
-
-The library includes 1000+ icons. Common examples:
-
-```go
-// UI & Navigation
-lucide.Menu()
-lucide.ChevronDown()
-lucide.ArrowRight()
-lucide.Home()
-lucide.Search()
-lucide.Settings()
-
-// Actions
-lucide.Plus()
-lucide.Minus()
-lucide.X()
-lucide.Check()
-lucide.Edit()
-lucide.Trash()
-
-// Media
-lucide.Play()
-lucide.Pause()
-lucide.Volume()
-lucide.Image()
-lucide.Video()
-
-// Communication
-lucide.Mail()
-lucide.MessageSquare()
-lucide.Phone()
-lucide.Bell()
-
-// Files & Folders
-lucide.File()
-lucide.Folder()
-lucide.Download()
-lucide.Upload()
-
-// Business
-lucide.ShoppingCart()
-lucide.CreditCard()
-lucide.DollarSign()
-lucide.TrendingUp()
-```
-
-### Integration with Components
-
-```go
-// Icon button component
-func IconButton(icon html.Node, label string) html.Node {
-    return Button(
-        AType("button"),
-        AClass("icon-button"),
-        AAria("label", label),
-        icon,
-    )
-}
-
-// Usage
-deleteBtn := IconButton(
-    lucide.Trash(lucide.Size("20")),
-    "Delete item",
-)
-
-// List with icons
-items := []string{"Home", "About", "Contact"}
-icons := []html.Node{
-    lucide.Home(),
-    lucide.Info(),
-    lucide.Mail(),
-}
-
-var listItems []html.Component
-for i, item := range items {
-    listItems = append(listItems, Li(
-        AClass("flex items-center gap-2"),
-        icons[i],
-        T(item),
-    ))
-}
-
-Nav(Ul(Fragment(listItems...)))
-```
-
 ## Summary
 
 plainkit/html provides compile-time type safety for HTML generation through:
@@ -813,7 +502,9 @@ plainkit/html provides compile-time type safety for HTML generation through:
 3. **Flexible children** - Direct pass, Child(), or Fragment()
 4. **Safe text** - Auto-escaped T() vs unsafe UnsafeText()
 5. **Composition** - Build reusable components through function composition
-6. **SVG support** - Full SVG element and attribute support with Svg prefix
-7. **Icon library** - 1000+ Lucide icons with sensible defaults
 
 The library enforces correctness at compile time, preventing invalid HTML structures before runtime.
+
+**Related skills:**
+- skills/plainkit/svg - SVG elements and attributes with composition limitations
+- skills/plainkit/icons - 1000+ Lucide icons with sensible defaults
