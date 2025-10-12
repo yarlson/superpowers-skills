@@ -81,9 +81,10 @@ Svg(...)           // Root SVG element
 SvgCircle(...)     // Circle
 SvgPath(...)       // Path
 SvgRect(...)       // Rectangle
-SvgG(...)          // Group
-SvgText(...)       // Text (for labels)
-SvgPolyline(...)   // Polyline (for line charts)
+SvgLine(...)       // Line
+SvgPolygon(...)    // Polygon
+SvgPolyline(...)   // Polyline
+SvgEllipse(...)    // Ellipse
 
 // SVG geometry attributes
 ACx("50"), ACy("50")    // Circle center
@@ -97,12 +98,7 @@ AStroke("red")          // Stroke color
 AStrokeWidth("2")       // Stroke width
 AViewBox("0 0 24 24")   // ViewBox
 
-// SVG text attributes
-ATextAnchor("middle")   // Text alignment
-AFontSize("14")         // Font size
-AFontFamily("Arial")    // Font family
-
-// Lucide icons
+// Lucide icons (recommended for complex SVG)
 lucide.Heart(lucide.Size("24"))
 lucide.Menu(html.AClass("icon"))
 ```
@@ -532,17 +528,17 @@ SVG elements are prefixed with `Svg` to avoid naming conflicts with HTML element
 
 ```go
 // SVG elements use Svg prefix
-Svg(...)           // <svg> element
+Svg(...)           // <svg> element (root)
 SvgCircle(...)     // <circle> element
 SvgPath(...)       // <path> element
 SvgRect(...)       // <rect> element
-SvgG(...)          // <g> (group) element
 SvgLine(...)       // <line> element
 SvgPolygon(...)    // <polygon> element
 SvgPolyline(...)   // <polyline> element
 SvgEllipse(...)    // <ellipse> element
-SvgText(...)       // <text> element (for labels)
-SvgTitle(...)      // <title> element (accessibility)
+
+// Note: SvgG, SvgText, and nested SVG elements have limited support
+// See "SVG Composition Limitation" section below
 ```
 
 ### SVG-Specific Attributes
@@ -622,43 +618,13 @@ checkmark := Svg(
         AStrokeLinejoin("round"),
     ),
 )
-
-// Complex SVG with groups and text labels
-chart := Svg(
-    AViewBox("0 0 250 150"),
-    AXmlns("http://www.w3.org/2000/svg"),
-    // Bars group
-    SvgG(
-        AClass("bars"),
-        ATransform("translate(20, 10)"),
-        SvgRect(AX("0"), AY("20"), AWidth("40"), AHeight("80"), AFill("red")),
-        SvgRect(AX("60"), AY("40"), AWidth("40"), AHeight("60"), AFill("green")),
-        SvgRect(AX("120"), AY("60"), AWidth("40"), AHeight("40"), AFill("blue")),
-    ),
-    // Labels group
-    SvgG(
-        AClass("labels"),
-        SvgText(
-            AX("40"), AY("125"),
-            ATextAnchor("middle"),
-            AFontSize("12"),
-            T("Red"),
-        ),
-        SvgText(
-            AX("100"), AY("125"),
-            ATextAnchor("middle"),
-            AFontSize("12"),
-            T("Green"),
-        ),
-        SvgText(
-            AX("160"), AY("125"),
-            ATextAnchor("middle"),
-            AFontSize("12"),
-            T("Blue"),
-        ),
-    ),
-)
 ```
+
+**SVG Composition Limitation:**
+
+The current PlainKit HTML implementation has limited support for nested SVG elements. Child SVG elements (like `SvgRect`, `SvgText`) cannot be directly passed to parent SVG elements (like `SvgG`) because `Node` does not implement the required `ApplyG`, `ApplyText`, etc. methods.
+
+For complex SVG compositions with groups and nested elements, use the Lucide icons library which provides pre-built, tested SVG components, or construct SVG as a string using `UnsafeText()`.
 
 ### SVG Type System
 
