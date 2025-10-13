@@ -45,7 +45,7 @@ If no directory exists and no CLAUDE.md preference:
 No worktree directory found. Where should I create worktrees?
 
 1. .worktrees/ (project-local, hidden)
-2. ~/.clank-worktrees/<project-name>/ (global location)
+2. ~/.config/superpowers/worktrees/<project-name>/ (global location)
 
 Which would you prefer?
 ```
@@ -70,7 +70,7 @@ Per Jesse's rule "Fix broken things immediately":
 
 **Why critical:** Prevents accidentally committing worktree contents to repository.
 
-### For Global Directory (~/.clank-worktrees)
+### For Global Directory (~/.config/superpowers/worktrees)
 
 No .gitignore verification needed - outside project entirely.
 
@@ -90,8 +90,8 @@ case $LOCATION in
   .worktrees|worktrees)
     path="$LOCATION/$BRANCH_NAME"
     ;;
-  ~/.clank-worktrees/*)
-    path="~/.clank-worktrees/$project/$BRANCH_NAME"
+  ~/.config/superpowers/worktrees/*)
+    path="~/.config/superpowers/worktrees/$project/$BRANCH_NAME"
     ;;
 esac
 

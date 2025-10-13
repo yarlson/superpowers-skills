@@ -9,12 +9,12 @@ import { ConversationExchange } from './types.js';
 describe('verifyIndex', () => {
   const testDir = path.join(os.tmpdir(), 'conversation-search-test-' + Date.now());
   const projectsDir = path.join(testDir, '.claude', 'projects');
-  const archiveDir = path.join(testDir, '.clank', 'conversation-archive');
-  const dbPath = path.join(testDir, '.clank', 'conversation-index', 'db.sqlite');
+  const archiveDir = path.join(testDir, '.config', 'superpowers', 'conversation-archive');
+  const dbPath = path.join(testDir, '.config', 'superpowers', 'conversation-index', 'db.sqlite');
 
   beforeEach(() => {
     // Create test directories
-    fs.mkdirSync(path.join(testDir, '.clank', 'conversation-index'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, '.config', 'superpowers', 'conversation-index'), { recursive: true });
     fs.mkdirSync(projectsDir, { recursive: true });
     fs.mkdirSync(archiveDir, { recursive: true });
 
@@ -146,12 +146,12 @@ describe('verifyIndex', () => {
 describe('repairIndex', () => {
   const testDir = path.join(os.tmpdir(), 'conversation-repair-test-' + Date.now());
   const projectsDir = path.join(testDir, '.claude', 'projects');
-  const archiveDir = path.join(testDir, '.clank', 'conversation-archive');
-  const dbPath = path.join(testDir, '.clank', 'conversation-index', 'db.sqlite');
+  const archiveDir = path.join(testDir, '.config', 'superpowers', 'conversation-archive');
+  const dbPath = path.join(testDir, '.config', 'superpowers', 'conversation-index', 'db.sqlite');
 
   beforeEach(() => {
     // Create test directories
-    fs.mkdirSync(path.join(testDir, '.clank', 'conversation-index'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, '.config', 'superpowers', 'conversation-index'), { recursive: true });
     fs.mkdirSync(projectsDir, { recursive: true });
     fs.mkdirSync(archiveDir, { recursive: true });
 

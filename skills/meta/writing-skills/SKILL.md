@@ -12,7 +12,7 @@ languages: all
 
 **Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Skills are written to `${SUPERPOWERS_SKILLS_ROOT}/skills/` (cloned to `~/.config/superpowers/skills/`).** You edit skills in your local branch of this repository.
+**Skills are written to `${SUPERPOWERS_SKILLS_ROOT}` (cloned to `~/.config/superpowers/skills/`).** You edit skills in your local branch of this repository.
 
 You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 
@@ -71,10 +71,10 @@ API docs, syntax guides, tool documentation (office docs)
 
 ## Directory Structure
 
-**All skills are in the skills repository at `${SUPERPOWERS_SKILLS_ROOT}/skills/`:**
+**All skills are in the skills repository at `${SUPERPOWERS_SKILLS_ROOT}`:**
 
 ```
-${SUPERPOWERS_SKILLS_ROOT}/skills/
+${SUPERPOWERS_SKILLS_ROOT}
   skill-name/
     SKILL.md              # Main reference (required)
     supporting-file.*     # Only if needed
@@ -189,7 +189,7 @@ When searching, dispatch subagent with template...
 [20 lines of repeated instructions]
 
 # ✅ GOOD: Reference other skill
-Always use subagents (50-100x context savings). See skills/getting-started for workflow.
+Always use subagents (50-100x context savings). See skills/using-skills for workflow.
 ```
 
 **Compress examples:**
@@ -248,7 +248,7 @@ Use path format without `@` prefix or `/SKILL.md` suffix:
 
 **Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context before you need them.
 
-**To read a skill reference:** Use Read tool on `${SUPERPOWERS_SKILLS_ROOT}/skills/category/skill-name/SKILL.md`
+**To read a skill reference:** Use Read tool on `${SUPERPOWERS_SKILLS_ROOT}/category/skill-name/SKILL.md`
 
 ## Flowchart Usage
 

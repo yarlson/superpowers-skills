@@ -23,13 +23,13 @@ setup_test() {
   TEST_DIR=$(mktemp -d)
   export HOME="$TEST_DIR"
   export TEST_PROJECTS_DIR="$TEST_DIR/.claude/projects"
-  export TEST_ARCHIVE_DIR="$TEST_DIR/.clank/conversation-archive"
-  export TEST_DB_PATH="$TEST_DIR/.clank/conversation-index/db.sqlite"
+  export TEST_ARCHIVE_DIR="$TEST_DIR/.config/superpowers/conversation-archive"
+  export TEST_DB_PATH="$TEST_DIR/.config/superpowers/conversation-index/db.sqlite"
 
   mkdir -p "$HOME/.claude/hooks"
   mkdir -p "$TEST_PROJECTS_DIR"
   mkdir -p "$TEST_ARCHIVE_DIR"
-  mkdir -p "$TEST_DIR/.clank/conversation-index"
+  mkdir -p "$TEST_DIR/.config/superpowers/conversation-index"
 }
 
 cleanup_test() {
@@ -70,7 +70,7 @@ assert_summary_exists() {
 
   # If file is in projects dir, convert to archive path
   if [[ "$jsonl_file" == *"/.claude/projects/"* ]]; then
-    jsonl_file=$(echo "$jsonl_file" | sed "s|/.claude/projects/|/.clank/conversation-archive/|")
+    jsonl_file=$(echo "$jsonl_file" | sed "s|/.claude/projects/|/.config/superpowers/conversation-archive/|")
   fi
 
   local summary_file="${jsonl_file%.jsonl}-summary.txt"
@@ -224,7 +224,7 @@ test_scenario_3_recovery_verify_repair() {
 
   echo "  3. Deleting summary to simulate missing file..."
   # Delete from archive (where summaries are stored)
-  local archive_conv1=$(echo "$conv1" | sed "s|/.claude/projects/|/.clank/conversation-archive/|")
+  local archive_conv1=$(echo "$conv1" | sed "s|/.claude/projects/|/.config/superpowers/conversation-archive/|")
   rm "${archive_conv1%.jsonl}-summary.txt"
 
   echo "  4. Running verify (should detect missing)..."
@@ -273,7 +273,7 @@ test_scenario_4_change_detection() {
   sleep 1
 
   # Modify the archive file (that's what verify checks)
-  local archive_conv=$(echo "$conv" | sed "s|/.claude/projects/|/.clank/conversation-archive/|")
+  local archive_conv=$(echo "$conv" | sed "s|/.claude/projects/|/.config/superpowers/conversation-archive/|")
   cat >> "$archive_conv" <<'EOF'
 {"type":"user","message":{"role":"user","content":"Tell me more about TDD"},"timestamp":"2024-01-01T00:00:02Z"}
 {"type":"assistant","message":{"role":"assistant","content":"TDD has three phases: Red, Green, Refactor."},"timestamp":"2024-01-01T00:00:03Z"}

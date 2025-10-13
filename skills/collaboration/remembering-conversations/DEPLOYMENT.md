@@ -265,7 +265,7 @@ cp ~/.config/superpowers/conversation-index/db.sqlite ~/.config/superpowers/conv
 
 ## Subagent Workflow
 
-**For searching conversations from within Claude Code sessions**, use the subagent pattern (see `skills/getting-started` for complete workflow).
+**For searching conversations from within Claude Code sessions**, use the subagent pattern (see `skills/using-skills` for complete workflow).
 
 **Template:** `tool/prompts/search-agent.md`
 

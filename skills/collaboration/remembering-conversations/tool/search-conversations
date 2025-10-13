@@ -54,7 +54,7 @@ OUTPUT FORMAT:
      Built authentication with JWT, implemented protected routes.
 
      92% match: "How do I handle auth errors in loaders?"
-     ~/.clank/conversation-archive/.../uuid.jsonl:145-167
+     ~/.config/superpowers/conversation-archive/.../uuid.jsonl:145-167
 
 QUERY TIPS:
   - Use natural language: "How did we handle X?"

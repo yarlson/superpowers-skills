@@ -3,6 +3,6 @@ dist/
 *.log
 .DS_Store
 
-# Local data (database and archives are at ~/.clank/, not in repo)
+# Local data (database and archives are at ~/.config/superpowers/, not in repo)
 *.sqlite*
 .cache/
