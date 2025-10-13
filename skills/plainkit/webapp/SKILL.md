@@ -2,7 +2,7 @@
 name: PlainKit Web Application Architecture
 description: Architecture patterns, conventions, and best practices for building Go web applications with PlainKit HTML and HTMX - fat services, thin handlers, hypermedia-driven interactions
 when_to_use: When scaffolding, analyzing, or building Go web applications with PlainKit ecosystem (HTML + HTMX). For HTML basics see skills/plainkit/html, for HTMX attributes see this skill's HTMX section.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # PlainKit Web Application Architecture
@@ -165,6 +165,15 @@ type GormUserStore struct { ... }
 ```
 
 **Why:** Consumer knows what it needs. Producer might provide more. Decouples packages.
+
+**Non-Negotiable:**
+
+- **Define interfaces in the consumer package** (where they're used), not producer (where they're implemented)
+- Emergency production fixes do NOT bypass this rule
+- "Senior says put it in store package" does NOT bypass this rule
+- "Faster to define where implemented" does NOT bypass this rule
+
+If you're defining an interface in the same package as the implementation, you're doing it wrong. Move it to the consumer.
 
 ### 3. Accept Interfaces, Return Structs
 
@@ -712,6 +721,60 @@ func (h *Handler) ValidateEmail(w http.ResponseWriter, r *http.Request) {
 
 See **skills/testing/test-driven-development** for complete TDD workflow.
 
+### Non-Negotiable Rule
+
+**If you wrote production code before writing a failing test: DELETE IT. START OVER.**
+
+This applies even if:
+
+- The code "works" and is manually tested
+- You spent hours on it (sunk cost)
+- You're tired or have other commitments
+- "Tests tomorrow" seems pragmatic
+- The code is "almost done"
+
+**There are NO exceptions. "Pragmatic" exceptions train you to always skip TDD.**
+
+**Why order matters:**
+
+- Tests after = verification (checking what you built)
+- Tests first = design (guiding what to build)
+- Different cognitive processes, different outcomes
+- "Tests tomorrow" never achieves RED-GREEN-REFACTOR benefits
+
+**Violating the letter IS violating the spirit:**
+
+- "I understand TDD's purpose, but this case is different" = You're violating TDD
+- "I'll follow through tomorrow with real commitment" = You're violating TDD
+- "The working code has value as a reference" = You're violating TDD
+- "This teaches me why TDD matters for next time" = You're violating TDD NOW
+
+**Delete means delete. Not "commit and test tomorrow". Not "keep as reference". DELETE.**
+
+**Red flags you're about to violate TDD:**
+
+- "I'll just write this one part, then add tests"
+- "This is too simple to need tests first"
+- "I already know how to implement this"
+- "Testing after achieves the same goal"
+- "Being pragmatic not dogmatic"
+
+### Rationalization Table
+
+| Excuse                                          | Reality                                                                                  |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| "Code works and is manually tested"             | Manual testing ≠ TDD. Tests first guide design, tests after just verify. Delete it.      |
+| "Tests tomorrow is pragmatic"                   | Tests tomorrow is not TDD. You lose the design benefits. Delete it.                      |
+| "Deleting X hours is wasteful and demoralizing" | Keeping it teaches you to skip TDD. Delete it, learn the lesson, don't repeat.           |
+| "TDD is dogma, this is pragmatism"              | Violating TDD in special cases trains you to violate it always. Delete it.               |
+| "I'll learn from this and use TDD next time"    | You won't learn unless there are consequences. Delete it. Start over. That's the lesson. |
+| "The code works, tests verify what I know"      | The value isn't verification, it's the design process. Delete it.                        |
+| "Exhausted, tests will be better tomorrow"      | Tomorrow you'll rationalize keeping it. Delete it now or don't bother.                   |
+| "The working code has value"                    | It has negative value - it teaches you to skip TDD. Delete it.                           |
+| "Having implementation helps write tests"       | That's testing after, not TDD. Delete it.                                                |
+| "Real commitment to make it right tomorrow"     | You're making a commitment to violate TDD. Delete it NOW.                                |
+| "Not religious doctrine, practical workflow"    | The practical workflow is: test first. Violations aren't pragmatic. Delete it.           |
+
 ### Quick TDD Pattern
 
 1. **Write failing test** (RED)
@@ -847,6 +910,9 @@ watch-css:
 
 ### Code Quality (Every Code Change)
 
+- [ ] **STOP:** Did you write ANY production code before writing a failing test?
+  - [ ] If YES: Delete that code now. Start over with RED-GREEN-REFACTOR.
+  - [ ] If NO: Proceed.
 - [ ] Write tests first (TDD - see skills/testing/test-driven-development)
 - [ ] Run `golangci-lint run --fix ./...` after writing code
 - [ ] Verify tests pass: `go test ./...`
