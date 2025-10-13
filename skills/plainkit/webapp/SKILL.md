@@ -2,35 +2,32 @@
 name: PlainKit Web Application Architecture
 description: Architecture patterns, conventions, and best practices for building Go web applications with PlainKit HTML and HTMX - fat services, thin handlers, hypermedia-driven interactions
 when_to_use: When scaffolding, analyzing, or building Go web applications with PlainKit ecosystem (HTML + HTMX). For HTML basics see skills/plainkit/html, for HTMX attributes see this skill's HTMX section.
-version: 1.0.0
+version: 2.0.0
 ---
 
 # PlainKit Web Application Architecture
 
 ## Overview
 
-This skill documents the architecture, patterns, and conventions for building production-ready Go web applications using the PlainKit ecosystem: type-safe HTML generation with `plainkit/html` and hypermedia-driven interactivity with `plainkit/htmx`.
+Build production-ready Go web applications using PlainKit ecosystem: type-safe HTML generation with `plainkit/html` and hypermedia-driven interactivity with `plainkit/htmx`.
 
-**Core principle:** *"Clear is better than clever."* — Effective Go. Build simple, composable applications with fat services, thin handlers, and server-rendered HTML.
+**Core principle:** _"Clear is better than clever."_ — Effective Go. Build simple, composable applications with fat services, thin handlers, and server-rendered HTML.
 
 **Related skills:**
+
 - skills/plainkit/html - Core HTML generation patterns
-- skills/plainkit/svg - SVG elements (if needed)
+- skills/plainkit/svg - SVG elements
 - skills/plainkit/icons - Lucide icons
+- skills/testing/test-driven-development - TDD workflow for implementation
 
 ## Quick Reference
 
 ### Technology Stack
 
 ```go
-// HTML rendering (type-safe)
-import . "github.com/plainkit/html"
-
-// HTMX integration (hypermedia interactivity)
-import . "github.com/plainkit/htmx"
-
-// Standard library HTTP
-import "net/http"
+import . "github.com/plainkit/html"  // Type-safe HTML
+import . "github.com/plainkit/htmx"  // Hypermedia interactivity
+import "net/http"                    // Standard library HTTP
 ```
 
 ### Repository Layout
@@ -42,7 +39,7 @@ myapp/
 │   ├── app/                # Wiring, routes
 │   ├── handlers/           # HTTP handlers (thin)
 │   ├── service/            # Business logic (fat)
-│   ├── store/              # Persistence
+│   ├── store/              # Persistence interfaces + impls
 │   ├── domain/             # Entities
 │   ├── views/              # HTML rendering
 │   ├── ui/                 # UI components
@@ -50,87 +47,164 @@ myapp/
 │   └── middleware/         # HTTP middleware
 ├── testdata/
 ├── go.mod
+├── .golangci.yml           # Linter config (mandatory)
 └── Makefile
 ```
 
 ### Dependency Flow
 
 ```
-store → service → handlers → app → cmd/server/main.go
+domain → store → service → handlers → app → cmd/server/main.go
 ```
 
-*"Dependencies point inward"* — Clean Architecture principle
+_Dependencies point inward_ — Clean Architecture principle
 
-## Core Technologies
+## Code Quality: Linting
 
-### PlainKit HTML — Type-Safe HTML Builder
+**Every PlainKit webapp MUST use `golangci-lint` with `wsl_v5` for consistent formatting.**
 
-```go
-import . "github.com/plainkit/html"
+### Setup: .golangci.yml
 
-// Element creation
-Div(
-    AClass("container"),
-    H1(T("Title")),
-    P(T("Paragraph")),
-)
+Create `.golangci.yml` in the root directory (where `go.mod` lives):
 
-// Text helpers
-T("escaped text")           // HTML-escaped
-UnsafeText("<b>raw</b>")   // Unescaped HTML
-Fragment(node1, node2)      // Group nodes
+```yaml
+version: "2"
 
-// Attributes
-AClass("class")
-AId("id")
-AHref("/path")
-AType("submit")
+linters:
+  enable:
+    - wsl_v5
+  settings:
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+    staticcheck:
+      checks:
+        - "-ST1001" # Allow dot imports for plainkit/html
 ```
 
-**Key insight:** *"Don't communicate by sharing memory; share memory by communicating."* — Effective Go. Components compose through function calls, not shared state.
+### Workflow: Run After Every Code Change
 
-See skills/plainkit/html for complete documentation.
+```bash
+# Fix issues automatically
+golangci-lint run --fix ./...
 
-### PlainKit HTMX — Hypermedia Interactivity
-
-```go
-import . "github.com/plainkit/htmx"
-
-// HTMX attributes
-Button(
-    HxGet("/load-more"),        // GET request
-    HxPost("/submit"),          // POST request
-    HxTarget("#list"),          // Target element
-    HxSwap("beforeend"),        // Swap strategy
-    HxTrigger("click"),         // Trigger event
-    T("Load More"),
-)
+# Or add to Makefile
+lint:
+	golangci-lint run --fix ./...
 ```
 
-**HTMX Swap Strategies:**
-- `innerHTML` - Replace inner HTML (default)
-- `outerHTML` - Replace entire element
-- `beforebegin` - Insert before target
-- `afterbegin` - Insert at start of target
-- `beforeend` - Insert at end of target
-- `afterend` - Insert after target
-- `delete` - Delete target
-- `none` - Don't swap
+**Why:** `wsl_v5` enforces consistent whitespace/line grouping, making code easier to read and maintain. Run after every code change, not just at the end.
 
-**Serve HTMX JavaScript:**
+## Go Interfaces: Best Practices
+
+_"The bigger the interface, the weaker the abstraction."_ — Rob Pike
+
+### 1. Keep Interfaces Small
+
+**Bad:**
 
 ```go
-mux.HandleFunc("GET /js/htmx.min.js", func(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/javascript")
-    w.Write(htmx.JavaScript())
-})
+type UserRepository interface {
+    Create(user User) error
+    Update(user User) error
+    Delete(id string) error
+    Get(id string) (User, error)
+    List(limit, offset int) ([]User, error)
+    FindByEmail(email string) (User, error)
+    Count() (int, error)
+}
+```
+
+**Good:**
+
+```go
+// Define only what you need
+type UserGetter interface {
+    Get(ctx context.Context, id string) (*domain.User, error)
+}
+
+type UserCreator interface {
+    Create(ctx context.Context, user *domain.User) error
+}
+
+// Compose when needed
+type UserStore interface {
+    UserGetter
+    UserCreator
+    List(ctx context.Context, limit, offset int) ([]*domain.User, error)
+}
+```
+
+### 2. Define Interfaces Where They're Used (Consumer)
+
+**Bad:**
+
+```go
+// internal/store/user.go (producer defines interface)
+type UserStore interface { ... }
+type SqlUserStore struct { ... }
+```
+
+**Good:**
+
+```go
+// internal/service/user.go (consumer defines interface)
+type userStore interface {
+    Get(ctx context.Context, id string) (*domain.User, error)
+    Create(ctx context.Context, user *domain.User) error
+}
+
+type UserService struct {
+    store userStore  // Service defines what it needs
+}
+
+// internal/store/user.go (producer implements)
+type GormUserStore struct { ... }
+// Implicit satisfaction - no "implements" keyword
+```
+
+**Why:** Consumer knows what it needs. Producer might provide more. Decouples packages.
+
+### 3. Accept Interfaces, Return Structs
+
+_"Accept interfaces, return structs."_ — Go Proverb
+
+```go
+// Good: Accept interface
+func NewUserService(store userStore) *UserService {
+    return &UserService{store: store}
+}
+
+// Good: Return concrete type
+func (s *UserService) Get(ctx context.Context, id string) (*domain.User, error) {
+    return s.store.Get(ctx, id)
+}
+```
+
+### 4. Use Composition Over Large Interfaces
+
+```go
+// Compose small interfaces
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+type ReadWriter interface {
+    Reader
+    Writer
+}
 ```
 
 ## Architecture Layers
 
 ### Layer 1: Domain (Pure Data)
 
-*"Make the zero value useful."* — Effective Go
+_"Make the zero value useful."_ — Effective Go
 
 ```go
 // internal/domain/user.go
@@ -138,7 +212,6 @@ package domain
 
 import "time"
 
-// User represents a user entity
 type User struct {
     ID        string    `gorm:"primaryKey;type:varchar(36)"`
     Name      string    `gorm:"type:varchar(255);not null"`
@@ -147,100 +220,30 @@ type User struct {
     UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
-// TableName specifies the table name
-func (User) TableName() string {
-    return "users"
-}
-
-// No business logic, minimal dependencies - pure data with GORM tags
+func (User) TableName() string { return "users" }
 ```
 
 **Principles:**
+
 - Pure data structures
 - No business logic
-- No dependencies on other layers
+- GORM tags for database mapping
 - Zero value should be valid when possible
 
 ### Layer 2: Store (Persistence)
 
-*"Accept interfaces, return structs."* — Go Proverb
+**Define interface in consumer (service), implement in store package.**
 
 ```go
-// internal/store/user.go
-package store
-
-import (
-    "context"
-    "myapp/internal/domain"
-)
-
-// UserStore defines persistence operations
-type UserStore interface {
-    Create(ctx context.Context, user *domain.User) error
+// internal/service/user.go (interface defined by consumer)
+type userStore interface {
     Get(ctx context.Context, id string) (*domain.User, error)
+    Create(ctx context.Context, user *domain.User) error
     List(ctx context.Context, limit, offset int) ([]*domain.User, error)
-    Update(ctx context.Context, user *domain.User) error
-    Delete(ctx context.Context, id string) error
 }
 
-// InMemoryUserStore implements UserStore
-type InMemoryUserStore struct {
-    users map[string]*domain.User
-    mu    sync.RWMutex
-}
-
-func NewInMemoryUserStore() *InMemoryUserStore {
-    return &InMemoryUserStore{
-        users: make(map[string]*domain.User),
-    }
-}
-
-func (s *InMemoryUserStore) Create(ctx context.Context, user *domain.User) error {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-
-    if _, exists := s.users[user.ID]; exists {
-        return errors.New("user already exists")
-    }
-
-    s.users[user.ID] = user
-    return nil
-}
-
-func (s *InMemoryUserStore) Get(ctx context.Context, id string) (*domain.User, error) {
-    s.mu.RLock()
-    defer s.mu.RUnlock()
-
-    user, exists := s.users[id]
-    if !exists {
-        return nil, errors.New("user not found")
-    }
-
-    return user, nil
-}
-```
-
-**Principles:**
-- Define interface in store package
-- Return concrete types (domain entities)
-- Use context.Context for cancellation
-- Thread-safe for in-memory implementations
-
-#### Database Store Implementation (GORM + SQLite3)
-
-**Recommended:** Use GORM with SQLite3 for simple, type-safe database operations with pure Go (no CGO required when using modernc.org/sqlite).
-
-```go
-// internal/store/gorm_user.go
+// internal/store/gorm_user.go (implementation)
 package store
-
-import (
-    "context"
-    "errors"
-
-    "gorm.io/gorm"
-    "myapp/internal/domain"
-)
 
 type GormUserStore struct {
     db *gorm.DB
@@ -251,8 +254,7 @@ func NewGormUserStore(db *gorm.DB) *GormUserStore {
 }
 
 func (s *GormUserStore) Create(ctx context.Context, user *domain.User) error {
-    result := s.db.WithContext(ctx).Create(user)
-    return result.Error
+    return s.db.WithContext(ctx).Create(user).Error
 }
 
 func (s *GormUserStore) Get(ctx context.Context, id string) (*domain.User, error) {
@@ -265,103 +267,32 @@ func (s *GormUserStore) Get(ctx context.Context, id string) (*domain.User, error
 
     return &user, result.Error
 }
-
-func (s *GormUserStore) List(ctx context.Context, limit, offset int) ([]*domain.User, error) {
-    var users []*domain.User
-    result := s.db.WithContext(ctx).
-        Order("created_at DESC").
-        Limit(limit).
-        Offset(offset).
-        Find(&users)
-
-    return users, result.Error
-}
-
-func (s *GormUserStore) Update(ctx context.Context, user *domain.User) error {
-    result := s.db.WithContext(ctx).Save(user)
-    return result.Error
-}
-
-func (s *GormUserStore) Delete(ctx context.Context, id string) error {
-    result := s.db.WithContext(ctx).Delete(&domain.User{}, "id = ?", id)
-    return result.Error
-}
 ```
 
-**Database initialization with GORM:**
+**Database initialization:**
 
 ```go
 // internal/store/db.go
-package store
-
-import (
-    "log"
-
-    "gorm.io/driver/sqlite"
-    "gorm.io/gorm"
-    "gorm.io/gorm/logger"
-
-    "myapp/internal/domain"
-)
-
-// NewDB initializes GORM with SQLite3 (pure Go, no CGO)
 func NewDB(dbPath string, debug bool) (*gorm.DB, error) {
-    var gormLogger logger.Interface
-    if debug {
-        gormLogger = logger.Default.LogMode(logger.Info)
-    } else {
-        gormLogger = logger.Default.LogMode(logger.Silent)
+    config := &gorm.Config{
+        Logger: logger.Default.LogMode(logger.Silent),
     }
 
-    db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-        Logger: gormLogger,
-    })
+    if debug {
+        config.Logger = logger.Default.LogMode(logger.Info)
+    }
+
+    db, err := gorm.Open(sqlite.Open(dbPath), config)
     if err != nil {
         return nil, err
     }
 
     // Auto-migrate schemas
-    if err := db.AutoMigrate(
-        &domain.User{},
-        // Add other models here
-    ); err != nil {
+    if err := db.AutoMigrate(&domain.User{}); err != nil {
         return nil, err
     }
 
     return db, nil
-}
-
-// CloseDB closes the database connection
-func CloseDB(db *gorm.DB) error {
-    sqlDB, err := db.DB()
-    if err != nil {
-        return err
-    }
-    return sqlDB.Close()
-}
-```
-
-**Domain model with GORM tags:**
-
-```go
-// internal/domain/user.go
-package domain
-
-import (
-    "time"
-)
-
-type User struct {
-    ID        string    `gorm:"primaryKey;type:varchar(36)"`
-    Name      string    `gorm:"type:varchar(255);not null"`
-    Email     string    `gorm:"type:varchar(255);uniqueIndex;not null"`
-    CreatedAt time.Time `gorm:"autoCreateTime"`
-    UpdatedAt time.Time `gorm:"autoUpdateTime"`
-}
-
-// TableName specifies the table name
-func (User) TableName() string {
-    return "users"
 }
 ```
 
@@ -371,50 +302,34 @@ func (User) TableName() string {
 require (
     gorm.io/driver/sqlite v1.5.4
     gorm.io/gorm v1.25.5
-    modernc.org/sqlite v1.27.0 // Pure Go SQLite driver (no CGO)
+    modernc.org/sqlite v1.27.0  // Pure Go (no CGO)
 )
-```
-
-**Why GORM + SQLite3:**
-- **Pure Go**: modernc.org/sqlite requires no CGO (easier cross-compilation)
-- **Type-safe**: Compile-time validation of queries
-- **Auto-migration**: Schema management built-in
-- **Simple**: Less boilerplate than database/sql
-- **Portable**: Single-file database, perfect for development and small apps
-- **Production-ready**: SQLite is battle-tested and fast for read-heavy workloads
 ```
 
 ### Layer 3: Service (Business Logic - Fat)
 
-*"A little copying is better than a little dependency."* — Go Proverb
+_"A little copying is better than a little dependency."_ — Go Proverb
 
 ```go
 // internal/service/user.go
 package service
 
-import (
-    "context"
-    "errors"
-    "strings"
-    "time"
-
-    "github.com/google/uuid"
-    "myapp/internal/domain"
-    "myapp/internal/store"
-)
-
-// CreateUserInput is input for creating a user
 type CreateUserInput struct {
     Name  string
     Email string
 }
 
-// UserService encapsulates user business logic
-type UserService struct {
-    store store.UserStore
+// Define interface for store dependency (consumer-defined)
+type userStore interface {
+    Create(ctx context.Context, user *domain.User) error
+    Get(ctx context.Context, id string) (*domain.User, error)
 }
 
-func NewUserService(store store.UserStore) *UserService {
+type UserService struct {
+    store userStore
+}
+
+func NewUserService(store userStore) *UserService {
     return &UserService{store: store}
 }
 
@@ -443,42 +358,23 @@ func (s *UserService) Create(ctx context.Context, input CreateUserInput) (*domai
 
     return user, nil
 }
-
-func (s *UserService) List(ctx context.Context, limit, offset int) ([]*domain.User, error) {
-    if limit <= 0 || limit > 100 {
-        limit = 20 // Default
-    }
-
-    return s.store.List(ctx, limit, offset)
-}
-
-func isValidEmail(email string) bool {
-    return strings.Contains(email, "@")
-}
 ```
 
 **Principles:**
+
 - **Fat services** - All business logic here
 - Input/output structs for type safety
 - Validation happens in service layer
+- Define minimal interfaces for dependencies
 - Returns domain entities
-- No HTTP knowledge (uses context, not http.Request)
 
 ### Layer 4: Handlers (HTTP Layer - Thin)
 
-*"Errors are values."* — Go Blog
+_"Errors are values."_ — Go Blog
 
 ```go
 // internal/handlers/user.go
 package handlers
-
-import (
-    "net/http"
-    "strconv"
-
-    "myapp/internal/service"
-    "myapp/internal/views"
-)
 
 type UserHandler struct {
     userService *service.UserService
@@ -488,7 +384,6 @@ func NewUserHandler(userService *service.UserService) *UserHandler {
     return &UserHandler{userService: userService}
 }
 
-// ListUsers handles GET /users
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
     limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
     offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
@@ -504,7 +399,6 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte(html))
 }
 
-// CreateUser handles POST /users
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
     if err := r.ParseForm(); err != nil {
         http.Error(w, "Invalid form", http.StatusBadRequest)
@@ -521,11 +415,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // Redirect after POST (PRG pattern)
+    // POST-Redirect-GET pattern
     http.Redirect(w, r, "/users/"+user.ID, http.StatusSeeOther)
 }
 
-// LoadMoreUsers handles HTMX GET /users/more
+// HTMX endpoint for infinite scroll
 func (h *UserHandler) LoadMoreUsers(w http.ResponseWriter, r *http.Request) {
     offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
@@ -543,15 +437,14 @@ func (h *UserHandler) LoadMoreUsers(w http.ResponseWriter, r *http.Request) {
 ```
 
 **Principles:**
+
 - **Thin handlers** - Minimal logic
 - Parse requests, delegate to service
-- Render views (HTML, not JSON)
-- Return HTML fragments for HTMX
+- Return HTML (not JSON)
+- Return HTML fragments for HTMX requests
 - Use POST-Redirect-GET pattern
 
 ### Layer 5: Views (HTML Rendering)
-
-*"Simplicity is complicated."* — Rob Pike
 
 ```go
 // internal/views/user.go
@@ -560,37 +453,21 @@ package views
 import (
     . "github.com/plainkit/html"
     . "github.com/plainkit/htmx"
-
-    "myapp/internal/domain"
 )
 
-// UsersPage renders the full users page
 func UsersPage(users []*domain.User) string {
     content := Div(
         AClass("container mx-auto p-4"),
         H1(AClass("text-2xl font-bold mb-4"), T("Users")),
 
-        // User table
         Table(
             AClass("w-full"),
-            AId("user-table"),
-            Thead(
-                Tr(
-                    Th(T("Name")),
-                    Th(T("Email")),
-                    Th(T("Created")),
-                ),
-            ),
-            Tbody(
-                AId("user-tbody"),
-                Fragment(UserRows(users)...),
-            ),
+            Tbody(AId("user-tbody"), Fragment(UserRows(users)...)),
         ),
 
-        // Load more button (HTMX)
         Button(
-            AClass("mt-4 px-4 py-2 bg-blue-500 text-white rounded"),
-            HxGet("/users/more?offset="+string(len(users))),
+            AClass("mt-4 px-4 py-2 bg-blue-500 text-white"),
+            HxGet("/users/more?offset="+strconv.Itoa(len(users))),
             HxTarget("#user-tbody"),
             HxSwap("beforeend"),
             T("Load More"),
@@ -600,7 +477,7 @@ func UsersPage(users []*domain.User) string {
     return Layout("Users", content)
 }
 
-// UserRows renders table rows (for HTMX partial updates)
+// Fragment for HTMX updates
 func UserRows(users []*domain.User) []Node {
     rows := make([]Node, 0, len(users))
 
@@ -608,53 +485,37 @@ func UserRows(users []*domain.User) []Node {
         rows = append(rows, Tr(
             Td(T(user.Name)),
             Td(T(user.Email)),
-            Td(T(user.CreatedAt.Format("2006-01-02"))),
         ))
     }
 
     return rows
 }
 
-// Layout wraps content in full HTML page
 func Layout(title string, content Node) string {
     page := Html(
         Head(
             Meta(ACharset("utf-8")),
-            Meta(AName("viewport"), AContent("width=device-width, initial-scale=1")),
             Title(T(title)),
             Link(ARel("stylesheet"), AHref("/css/output.css")),
             Script(ASrc("/js/htmx.min.js")),
         ),
-        Body(
-            content,
-        ),
+        Body(content),
     )
 
     return Render(page)
 }
 ```
 
-**Principles:**
-- Full pages for initial requests
-- HTML fragments for HTMX updates
-- Use Fragment() for collections
-- Keep view logic minimal
-- Return `string` (from Render()) or `[]Node` for composition
-
 ### Layer 6: App (Wiring & Routes)
-
-*"Don't panic."* — Effective Go
 
 ```go
 // internal/app/app.go
 package app
 
 import (
-    "log/slog"
     "net/http"
 
     "myapp/internal/handlers"
-    "myapp/internal/middleware"
     "myapp/internal/service"
     "myapp/internal/store"
 )
@@ -665,32 +526,18 @@ type App struct {
 }
 
 func New(logger *slog.Logger, db *gorm.DB) *App {
-    // Initialize stores (GORM-based)
+    // Wire dependencies
     userStore := store.NewGormUserStore(db)
-
-    // Initialize services
     userService := service.NewUserService(userStore)
-
-    // Initialize handlers
     userHandler := handlers.NewUserHandler(userService)
 
     // Setup routes
     mux := http.NewServeMux()
-
-    // Static assets
-    mux.HandleFunc("GET /js/htmx.min.js", serveHTMX)
-    mux.HandleFunc("GET /css/output.css", serveCSS)
-
-    // User routes
     mux.HandleFunc("GET /users", userHandler.ListUsers)
     mux.HandleFunc("POST /users", userHandler.CreateUser)
     mux.HandleFunc("GET /users/more", userHandler.LoadMoreUsers)
-    mux.HandleFunc("GET /users/{id}", userHandler.GetUser)
 
-    return &App{
-        mux:    mux,
-        logger: logger,
-    }
+    return &App{mux: mux, logger: logger}
 }
 
 func (a *App) Handler() http.Handler {
@@ -702,15 +549,7 @@ func (a *App) Handler() http.Handler {
 }
 ```
 
-**Principles:**
-- Wire dependencies in New()
-- Return http.Handler for testing
-- Apply middleware via Chain()
-- Use Go 1.22+ routing patterns
-
 ### Layer 7: Main (Entry Point)
-
-*"Make the zero value useful."* — Effective Go
 
 ```go
 // cmd/server/main.go
@@ -723,34 +562,17 @@ import (
     "os"
     "os/signal"
     "time"
-
-    "myapp/internal/app"
-    "myapp/internal/store"
 )
 
 func main() {
     logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-    // Initialize GORM database (SQLite3)
-    dbPath := os.Getenv("DB_PATH")
-    if dbPath == "" {
-        dbPath = "./data.db" // Default to local file
-    }
-
-    db, err := store.NewDB(dbPath, true) // true = debug mode
+    db, err := store.NewDB("./data.db", true)
     if err != nil {
-        logger.Error("Failed to connect to database", "error", err)
+        logger.Error("database init failed", "error", err)
         os.Exit(1)
     }
-
-    // Ensure database connection is closed on exit
-    defer func() {
-        if err := store.CloseDB(db); err != nil {
-            logger.Error("Failed to close database", "error", err)
-        }
-    }()
-
-    logger.Info("database initialized", "path", dbPath)
+    defer store.CloseDB(db)
 
     app := app.New(logger, db)
 
@@ -771,12 +593,9 @@ func main() {
         }
     }()
 
-    // Wait for interrupt signal
     sigint := make(chan os.Signal, 1)
     signal.Notify(sigint, os.Interrupt)
     <-sigint
-
-    logger.Info("shutting down server")
 
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
@@ -784,494 +603,36 @@ func main() {
     if err := server.Shutdown(ctx); err != nil {
         logger.Error("shutdown error", "error", err)
     }
-
-    logger.Info("server stopped")
-}
-```
-
-**Principles:**
-- Graceful shutdown
-- Structured logging
-- Reasonable timeouts
-- Single responsibility (bootstrap only)
-
-## Configuration Management
-
-*"The bigger the interface, the weaker the abstraction."* — Rob Pike
-
-### Environment-Based Configuration
-
-```go
-// internal/config/config.go
-package config
-
-import (
-    "errors"
-    "os"
-    "strconv"
-    "time"
-)
-
-type Config struct {
-    Server   ServerConfig
-    Database DatabaseConfig
-    Logging  LoggingConfig
-}
-
-type ServerConfig struct {
-    Port         string
-    ReadTimeout  time.Duration
-    WriteTimeout time.Duration
-    IdleTimeout  time.Duration
-}
-
-type DatabaseConfig struct {
-    Path  string // SQLite database file path
-    Debug bool   // Enable GORM debug logging
-}
-
-type LoggingConfig struct {
-    Level  string
-    Format string // json or text
-}
-
-// Load reads configuration from environment variables
-func Load() (*Config, error) {
-    cfg := &Config{
-        Server: ServerConfig{
-            Port:         getEnv("PORT", "8080"),
-            ReadTimeout:  getDuration("SERVER_READ_TIMEOUT", 15*time.Second),
-            WriteTimeout: getDuration("SERVER_WRITE_TIMEOUT", 15*time.Second),
-            IdleTimeout:  getDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
-        },
-        Database: DatabaseConfig{
-            Path:  getEnv("DB_PATH", "./data.db"),
-            Debug: getEnvBool("DB_DEBUG", false),
-        },
-        Logging: LoggingConfig{
-            Level:  getEnv("LOG_LEVEL", "info"),
-            Format: getEnv("LOG_FORMAT", "json"),
-        },
-    }
-
-    if err := cfg.Validate(); err != nil {
-        return nil, err
-    }
-
-    return cfg, nil
-}
-
-func (c *Config) Validate() error {
-    if c.Database.Path == "" {
-        return errors.New("DB_PATH is required")
-    }
-    return nil
-}
-
-func getEnv(key, defaultValue string) string {
-    if value := os.Getenv(key); value != "" {
-        return value
-    }
-    return defaultValue
-}
-
-func getEnvInt(key string, defaultValue int) int {
-    if value := os.Getenv(key); value != "" {
-        if intVal, err := strconv.Atoi(value); err == nil {
-            return intVal
-        }
-    }
-    return defaultValue
-}
-
-func getDuration(key string, defaultValue time.Duration) time.Duration {
-    if value := os.Getenv(key); value != "" {
-        if duration, err := time.ParseDuration(value); err == nil {
-            return duration
-        }
-    }
-    return defaultValue
-}
-
-func getEnvBool(key string, defaultValue bool) bool {
-    if value := os.Getenv(key); value != "" {
-        return value == "true" || value == "1"
-    }
-    return defaultValue
-}
-```
-
-### Using Configuration
-
-```go
-// cmd/server/main.go
-func main() {
-    cfg, err := config.Load()
-    if err != nil {
-        log.Fatal("Failed to load config:", err)
-    }
-
-    logger := setupLogger(cfg.Logging)
-
-    db, err := store.NewDB(cfg.Database.Path, cfg.Database.Debug)
-    if err != nil {
-        logger.Error("Failed to connect to database", "error", err)
-        os.Exit(1)
-    }
-    defer store.CloseDB(db)
-
-    app := app.New(logger, db)
-
-    server := &http.Server{
-        Addr:         ":" + cfg.Server.Port,
-        Handler:      app.Handler(),
-        ReadTimeout:  cfg.Server.ReadTimeout,
-        WriteTimeout: cfg.Server.WriteTimeout,
-        IdleTimeout:  cfg.Server.IdleTimeout,
-    }
-
-    // ... graceful shutdown ...
-}
-```
-
-### .env File Support
-
-```go
-// internal/config/dotenv.go
-package config
-
-import (
-    "bufio"
-    "os"
-    "strings"
-)
-
-// LoadEnv loads environment variables from .env file
-func LoadEnv(filename string) error {
-    file, err := os.Open(filename)
-    if err != nil {
-        return err // It's okay if .env doesn't exist
-    }
-    defer file.Close()
-
-    scanner := bufio.NewScanner(file)
-    for scanner.Scan() {
-        line := strings.TrimSpace(scanner.Text())
-
-        // Skip comments and empty lines
-        if line == "" || strings.HasPrefix(line, "#") {
-            continue
-        }
-
-        // Split on first =
-        parts := strings.SplitN(line, "=", 2)
-        if len(parts) != 2 {
-            continue
-        }
-
-        key := strings.TrimSpace(parts[0])
-        value := strings.TrimSpace(parts[1])
-
-        // Only set if not already set
-        if os.Getenv(key) == "" {
-            os.Setenv(key, value)
-        }
-    }
-
-    return scanner.Err()
-}
-```
-
-**Usage:**
-
-```go
-func main() {
-    // Load .env in development
-    if err := config.LoadEnv(".env"); err != nil {
-        // Ignore error - .env is optional
-    }
-
-    cfg, err := config.Load()
-    // ...
-}
-```
-
-**Example .env file:**
-
-```bash
-# Server configuration
-PORT=8080
-SERVER_READ_TIMEOUT=15s
-SERVER_WRITE_TIMEOUT=15s
-SERVER_IDLE_TIMEOUT=60s
-
-# Database configuration (SQLite)
-DB_PATH=./data.db
-DB_DEBUG=true
-
-# Logging
-LOG_LEVEL=info
-LOG_FORMAT=json
-```
-
-## Error Handling Patterns
-
-*"Errors are values."* — Rob Pike
-
-### Error Types
-
-```go
-// internal/errors/errors.go
-package errors
-
-import (
-    "errors"
-    "fmt"
-)
-
-// Common error types
-var (
-    ErrNotFound      = errors.New("resource not found")
-    ErrUnauthorized  = errors.New("unauthorized")
-    ErrForbidden     = errors.New("forbidden")
-    ErrBadRequest    = errors.New("bad request")
-    ErrConflict      = errors.New("resource conflict")
-    ErrInternal      = errors.New("internal server error")
-)
-
-// ValidationError represents validation failures
-type ValidationError struct {
-    Field   string
-    Message string
-}
-
-func (e *ValidationError) Error() string {
-    return fmt.Sprintf("%s: %s", e.Field, e.Message)
-}
-
-// MultiError aggregates multiple errors
-type MultiError struct {
-    Errors []error
-}
-
-func (e *MultiError) Error() string {
-    if len(e.Errors) == 0 {
-        return "no errors"
-    }
-    if len(e.Errors) == 1 {
-        return e.Errors[0].Error()
-    }
-    return fmt.Sprintf("%d errors occurred", len(e.Errors))
-}
-
-func (e *MultiError) Add(err error) {
-    if err != nil {
-        e.Errors = append(e.Errors, err)
-    }
-}
-
-func (e *MultiError) HasErrors() bool {
-    return len(e.Errors) > 0
-}
-```
-
-### HTTP Error Responses
-
-```go
-// internal/handlers/errors.go
-package handlers
-
-import (
-    "errors"
-    "log/slog"
-    "net/http"
-
-    . "github.com/plainkit/html"
-    apperrors "myapp/internal/errors"
-)
-
-// ErrorResponse renders error HTML for HTMX or full page
-func ErrorResponse(w http.ResponseWriter, r *http.Request, err error, statusCode int) {
-    w.Header().Set("Content-Type", "text/html")
-    w.WriteHeader(statusCode)
-
-    // For HTMX requests, return fragment
-    if r.Header.Get("HX-Request") == "true" {
-        html := Render(Div(
-            AClass("bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"),
-            T(err.Error()),
-        ))
-        w.Write([]byte(html))
-        return
-    }
-
-    // For full page requests, return complete error page
-    html := Render(Html(
-        Head(Title(T("Error"))),
-        Body(
-            H1(T("Error")),
-            P(T(err.Error())),
-            A(AHref("/"), T("Go Home")),
-        ),
-    ))
-    w.Write([]byte(html))
-}
-
-// HandleError maps application errors to HTTP errors
-func HandleError(w http.ResponseWriter, r *http.Request, logger *slog.Logger, err error) {
-    switch {
-    case errors.Is(err, apperrors.ErrNotFound):
-        ErrorResponse(w, r, err, http.StatusNotFound)
-    case errors.Is(err, apperrors.ErrUnauthorized):
-        ErrorResponse(w, r, err, http.StatusUnauthorized)
-    case errors.Is(err, apperrors.ErrForbidden):
-        ErrorResponse(w, r, err, http.StatusForbidden)
-    case errors.Is(err, apperrors.ErrBadRequest):
-        ErrorResponse(w, r, err, http.StatusBadRequest)
-    case errors.Is(err, apperrors.ErrConflict):
-        ErrorResponse(w, r, err, http.StatusConflict)
-    default:
-        logger.Error("internal error", "error", err, "path", r.URL.Path)
-        ErrorResponse(w, r, apperrors.ErrInternal, http.StatusInternalServerError)
-    }
-}
-```
-
-### Service Layer Error Wrapping
-
-```go
-// internal/service/user.go
-func (s *UserService) Get(ctx context.Context, id string) (*domain.User, error) {
-    user, err := s.store.Get(ctx, id)
-    if err != nil {
-        if errors.Is(err, sql.ErrNoRows) {
-            return nil, fmt.Errorf("%w: user %s", apperrors.ErrNotFound, id)
-        }
-        return nil, fmt.Errorf("get user: %w", err)
-    }
-
-    return user, nil
-}
-```
-
-### Handler Error Handling
-
-```go
-// internal/handlers/user.go
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-    id := r.PathValue("id")
-
-    user, err := h.userService.Get(r.Context(), id)
-    if err != nil {
-        HandleError(w, r, h.logger, err)
-        return
-    }
-
-    html := views.UserPage(user)
-    w.Header().Set("Content-Type", "text/html")
-    w.Write([]byte(html))
-}
-```
-
-## Middleware Patterns
-
-### Authentication Middleware
-
-```go
-// internal/middleware/auth.go
-package middleware
-
-import (
-    "context"
-    "net/http"
-
-    apperrors "myapp/internal/errors"
-)
-
-type contextKey string
-
-const UserContextKey contextKey = "user"
-
-// Auth middleware validates user session
-func Auth(logger *slog.Logger) func(http.Handler) http.Handler {
-    return func(next http.Handler) http.Handler {
-        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-            // Get session cookie
-            cookie, err := r.Cookie("session_id")
-            if err != nil {
-                http.Redirect(w, r, "/login", http.StatusSeeOther)
-                return
-            }
-
-            // Validate session (example - use real session store)
-            userID := validateSession(cookie.Value)
-            if userID == "" {
-                http.Redirect(w, r, "/login", http.StatusSeeOther)
-                return
-            }
-
-            // Add user to context
-            ctx := context.WithValue(r.Context(), UserContextKey, userID)
-            next.ServeHTTP(w, r.WithContext(ctx))
-        })
-    }
-}
-
-// RequireAuth protects specific routes
-func RequireAuth(handler http.HandlerFunc, logger *slog.Logger) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        userID, ok := r.Context().Value(UserContextKey).(string)
-        if !ok || userID == "" {
-            http.Redirect(w, r, "/login", http.StatusSeeOther)
-            return
-        }
-
-        handler(w, r)
-    }
-}
-```
-
-### Using Auth Middleware
-
-```go
-// internal/app/app.go
-func New(logger *slog.Logger, db *sql.DB) *App {
-    // ... setup stores and services ...
-
-    mux := http.NewServeMux()
-
-    // Public routes
-    mux.HandleFunc("GET /login", authHandler.LoginPage)
-    mux.HandleFunc("POST /login", authHandler.Login)
-
-    // Protected routes
-    mux.HandleFunc("GET /users", middleware.RequireAuth(userHandler.ListUsers, logger))
-    mux.HandleFunc("POST /users", middleware.RequireAuth(userHandler.CreateUser, logger))
-
-    return &App{mux: mux, logger: logger}
 }
 ```
 
 ## HTMX Patterns
 
-### Pattern 1: Infinite Scroll
+### Core Attributes
 
 ```go
-// Handler
-func (h *Handler) LoadMore(w http.ResponseWriter, r *http.Request) {
-    offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-    items, err := h.service.List(r.Context(), 10, offset)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+import . "github.com/plainkit/htmx"
 
-    html := views.ItemRows(items, offset+10)
-    w.Header().Set("Content-Type", "text/html")
-    w.Write([]byte(html))
-}
+Button(
+    HxGet("/load-more"),        // HTTP method + endpoint
+    HxTarget("#list"),          // Target element selector
+    HxSwap("beforeend"),        // Swap strategy
+    HxTrigger("click"),         // Trigger event
+)
+```
 
-// View
+**Swap Strategies:**
+
+- `innerHTML` - Replace inner HTML (default)
+- `outerHTML` - Replace entire element
+- `beforeend` - Append to target
+- `afterbegin` - Prepend to target
+- `none` - Don't swap (side effects only)
+
+### Pattern: Infinite Scroll
+
+```go
+// View returns rows + next load button
 func ItemRows(items []Item, nextOffset int) string {
     rows := make([]Node, 0, len(items)+1)
 
@@ -1279,7 +640,6 @@ func ItemRows(items []Item, nextOffset int) string {
         rows = append(rows, Div(T(item.Name)))
     }
 
-    // Next load more button
     rows = append(rows, Button(
         AId("load-more"),
         HxGet("/items/more?offset="+strconv.Itoa(nextOffset)),
@@ -1292,30 +652,36 @@ func ItemRows(items []Item, nextOffset int) string {
 }
 ```
 
-### Pattern 2: Form Validation
+### Pattern: Inline Edit
 
 ```go
-// Handler
-func (h *Handler) ValidateEmail(w http.ResponseWriter, r *http.Request) {
-    email := r.URL.Query().Get("email")
+// Display mode
+Div(
+    AId("user-name"),
+    Span(T(user.Name)),
+    Button(
+        HxGet("/users/"+user.ID+"/edit"),
+        HxTarget("#user-name"),
+        HxSwap("outerHTML"),
+        T("Edit"),
+    ),
+)
 
-    if !isValidEmail(email) {
-        html := Render(Span(
-            AClass("text-red-500"),
-            T("Invalid email"),
-        ))
-        w.Write([]byte(html))
-        return
-    }
+// Edit mode (handler returns this)
+Form(
+    AId("user-name"),
+    HxPost("/users/"+user.ID),
+    HxTarget("#user-name"),
+    HxSwap("outerHTML"),
+    Input(AType("text"), AName("name"), AValue(user.Name)),
+    Button(AType("submit"), T("Save")),
+)
+```
 
-    html := Render(Span(
-        AClass("text-green-500"),
-        T("✓ Valid"),
-    ))
-    w.Write([]byte(html))
-}
+### Pattern: Live Form Validation
 
-// View - Input with live validation
+```go
+// Input with validation
 Input(
     AType("email"),
     AName("email"),
@@ -1324,116 +690,52 @@ Input(
     HxTarget("#email-validation"),
 )
 Span(AId("email-validation"))
-```
 
-### Pattern 3: Inline Edit
+// Handler returns validation message
+func (h *Handler) ValidateEmail(w http.ResponseWriter, r *http.Request) {
+    email := r.URL.Query().Get("email")
 
-```go
-// View - Display mode
-func UserNameDisplay(user *domain.User) Node {
-    return Div(
-        AId("user-name"),
-        Span(T(user.Name)),
-        Button(
-            HxGet("/users/"+user.ID+"/edit"),
-            HxTarget("#user-name"),
-            HxSwap("outerHTML"),
-            T("Edit"),
-        ),
-    )
-}
+    if !isValidEmail(email) {
+        html := Render(Span(AClass("text-red-500"), T("Invalid email")))
+        w.Write([]byte(html))
+        return
+    }
 
-// View - Edit mode
-func UserNameEdit(user *domain.User) Node {
-    return Form(
-        AId("user-name"),
-        HxPost("/users/"+user.ID),
-        HxTarget("#user-name"),
-        HxSwap("outerHTML"),
-        Input(
-            AType("text"),
-            AName("name"),
-            AValue(user.Name),
-        ),
-        Button(AType("submit"), T("Save")),
-        Button(
-            AType("button"),
-            HxGet("/users/"+user.ID),
-            HxTarget("#user-name"),
-            HxSwap("outerHTML"),
-            T("Cancel"),
-        ),
-    )
+    html := Render(Span(AClass("text-green-500"), T("✓")))
+    w.Write([]byte(html))
 }
 ```
 
-## CSS Integration (Tailwind)
+## Testing with TDD
 
-### Embed CSS for Single Binary
+**ALWAYS use Test-Driven Development when implementing features.**
 
-```go
-// internal/css/embed.go
-package css
+See **skills/testing/test-driven-development** for complete TDD workflow.
 
-import _ "embed"
+### Quick TDD Pattern
 
-//go:embed output.css
-var CSS []byte
-```
-
-### Serve Embedded CSS
-
-```go
-func serveCSS(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "text/css")
-    w.Write(css.CSS)
-}
-```
-
-### Tailwind Configuration
-
-```javascript
-// tailwind.config.js
-module.exports = {
-  content: ["./internal/**/*.go"],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-```
-
-### Build CSS
-
-```makefile
-# Makefile
-css:
-	tailwindcss -i ./internal/css/index.css -o ./internal/css/output.css --minify
-
-watch-css:
-	tailwindcss -i ./internal/css/index.css -o ./internal/css/output.css --watch
-
-dev:
-	make -j2 watch-css run
-```
-
-## Testing Patterns
+1. **Write failing test** (RED)
+2. **Write minimal code to pass** (GREEN)
+3. **Refactor** while tests pass (REFACTOR)
 
 ### Service Tests
 
 ```go
 func TestUserService_Create(t *testing.T) {
+    // Arrange
     store := store.NewInMemoryUserStore()
     svc := service.NewUserService(store)
 
+    // Act
     user, err := svc.Create(context.Background(), service.CreateUserInput{
-        Name:  "John Doe",
+        Name:  "John",
         Email: "john@example.com",
     })
 
+    // Assert
     assert.NoError(t, err)
     assert.NotEmpty(t, user.ID)
-    assert.Equal(t, "John Doe", user.Name)
+    assert.Equal(t, "John", user.Name)
 }
 ```
 
@@ -1455,98 +757,135 @@ func TestUserHandler_ListUsers(t *testing.T) {
 }
 ```
 
-## Common Patterns Checklist
+## Development Workflow
+
+### 1. Initial Setup
+
+```bash
+# Initialize project
+go mod init myapp
+
+# Install dependencies
+go get github.com/plainkit/html
+go get github.com/plainkit/htmx
+go get gorm.io/gorm
+go get gorm.io/driver/sqlite
+
+# Create .golangci.yml (see "Code Quality: Linting" section)
+# Create directory structure (see "Repository Layout")
+```
+
+### 2. Development Loop (TDD)
+
+```bash
+# 1. Write failing test
+# 2. Run tests
+go test ./...
+
+# 3. Write minimal implementation
+# 4. Run linter + fix
+golangci-lint run --fix ./...
+
+# 5. Tests pass → Refactor
+# 6. Repeat
+```
+
+### 3. Running the App
+
+```bash
+# Build and run
+go run cmd/server/main.go
+
+# Or use air for live reload
+air
+```
+
+### Makefile
+
+```makefile
+.PHONY: test lint run css
+
+test:
+	go test -v ./...
+
+lint:
+	golangci-lint run --fix ./...
+
+run:
+	go run cmd/server/main.go
+
+css:
+	tailwindcss -i ./internal/css/index.css -o ./internal/css/output.css --minify
+
+dev:
+	make -j2 watch-css run
+
+watch-css:
+	tailwindcss -i ./internal/css/index.css -o ./internal/css/output.css --watch
+```
+
+## Checklist: New PlainKit Webapp
+
+### Setup
+
+- [ ] Create `.golangci.yml` with `wsl_v5` linter
+- [ ] Initialize `go.mod` with PlainKit dependencies
+- [ ] Create directory structure (domain, store, service, handlers, views, app)
+- [ ] Setup GORM with SQLite (`store/db.go`)
+- [ ] Configure Tailwind CSS build
 
 ### Architecture
-- [ ] Use **fat services, thin handlers**
-- [ ] Define interfaces in consumer package (store)
-- [ ] Accept interfaces, return structs
-- [ ] Dependencies point inward (domain ← store ← service ← handlers)
 
-### HTTP & Rendering
-- [ ] Return HTML, not JSON (unless API required)
-- [ ] Use HTMX for interactivity (avoid JavaScript)
-- [ ] Use POST-Redirect-GET pattern
-- [ ] Return HTML fragments for HTMX requests
-- [ ] Embed static assets for single binary
-- [ ] Use Go 1.22+ routing patterns
-
-### Configuration & Environment
-- [ ] Load configuration from environment variables
-- [ ] Validate configuration on startup
-- [ ] Support .env files for local development
-- [ ] Never hardcode secrets or connection strings
-
-### Error Handling
-- [ ] Use context.Context for cancellation
-- [ ] Wrap errors with context using fmt.Errorf
-- [ ] Map domain errors to HTTP status codes
-- [ ] Return HTML error responses (not JSON)
-- [ ] Log internal errors with structured logging
-- [ ] Validate in service layer, not handlers
-
-### Database & Persistence (GORM + SQLite3)
-- [ ] Use GORM with SQLite3 for type-safe queries
 - [ ] Define domain models with GORM tags
-- [ ] Use AutoMigrate for schema management
-- [ ] Always pass context with WithContext(ctx)
-- [ ] Handle gorm.ErrRecordNotFound explicitly
-- [ ] Use modernc.org/sqlite for pure Go (no CGO)
+- [ ] Define store interfaces **in service package** (consumer-defined)
+- [ ] Implement GORM stores in `store/` package
+- [ ] Write fat services with business logic
+- [ ] Write thin handlers (parse + delegate)
+- [ ] Create view functions returning HTML/fragments
+- [ ] Wire dependencies in `app/` package
+- [ ] Setup graceful shutdown in `main.go`
 
-### Security & Auth
-- [ ] Use middleware for authentication
-- [ ] Store user context in request context
-- [ ] Validate sessions before accessing protected routes
-- [ ] Use HTTPS in production
+### Code Quality (Every Code Change)
 
-### Operations
-- [ ] Implement graceful shutdown
-- [ ] Use structured logging (slog)
-- [ ] Set reasonable timeouts on http.Server
-- [ ] Handle signals for clean shutdown
+- [ ] Write tests first (TDD - see skills/testing/test-driven-development)
+- [ ] Run `golangci-lint run --fix ./...` after writing code
+- [ ] Verify tests pass: `go test ./...`
 
-## Effective Go Principles
+### HTMX Integration
 
-*"Gofmt's style is no one's favorite, yet gofmt is everyone's favorite."* — Rob Pike
+- [ ] Serve `htmx.min.js` from embedded JS
+- [ ] Return HTML fragments for HTMX endpoints
+- [ ] Use `HxGet`, `HxPost`, `HxTarget`, `HxSwap` attributes
+- [ ] Implement POST-Redirect-GET for form submissions
 
-1. **Formatting** - Use gofmt, no exceptions
-2. **Commentary** - Comments should explain *why*, not *what*
-3. **Names** - Short, meaningful, no underscores
-4. **Control structures** - if/for/switch, no while/do
-5. **Functions** - Multiple return values, named results
-6. **Data** - Composition over inheritance
-7. **Interfaces** - Small interfaces, implicit satisfaction
-8. **Concurrency** - Goroutines and channels when needed
-9. **Errors** - Errors are values, handle them
-10. **Simplicity** - *"Less is more"*
+### Best Practices
+
+- [ ] Keep interfaces small (single method when possible)
+- [ ] Define interfaces close to consumer, not producer
+- [ ] Accept interfaces, return structs
+- [ ] Use `context.Context` for cancellation
+- [ ] Return HTML, not JSON (unless building API)
+- [ ] Embed static assets (CSS, JS) for single binary
 
 ## Summary
 
-PlainKit web applications follow clean architecture with:
+PlainKit web applications follow these principles:
 
 1. **Fat services, thin handlers** - Business logic in services
-2. **Type-safe HTML** - Compile-time validation via plainkit/html
-3. **Hypermedia-driven** - HTMX for interactivity, not JSON APIs
-4. **Database integration** - GORM with SQLite3 (pure Go, no CGO)
-5. **Configuration management** - Environment variables with .env support
-6. **Error handling** - Typed errors with context wrapping
-7. **Authentication** - Middleware-based auth with context propagation
-8. **Single binary** - Embed CSS, JS, and SQLite database
-9. **Idiomatic Go** - Follow Effective Go principles
-10. **Clear structure** - Domain → Store → Service → Handler → App → Main
-
-**What this skill covers:**
-- 7-layer architecture with dependency injection
-- Database store implementations (GORM with SQLite3, auto-migration)
-- Configuration loading from environment variables
-- HTTP error handling with HTMX-aware responses
-- Authentication middleware patterns
-- HTMX interaction patterns (infinite scroll, inline edit, validation)
-- Testing patterns for services and handlers
+2. **Small, consumer-defined interfaces** - Define at call site
+3. **Type-safe HTML** - Compile-time validation via plainkit/html
+4. **Hypermedia-driven** - HTMX for interactivity
+5. **GORM + SQLite3** - Pure Go database (no CGO)
+6. **Consistent code quality** - `golangci-lint` with `wsl_v5` after every change
+7. **TDD workflow** - Write tests first (see skills/testing/test-driven-development)
+8. **Idiomatic Go** - Follow Effective Go principles
+9. **Clear architecture** - Domain → Store → Service → Handler → App → Main
 
 **Related skills:**
+
 - skills/plainkit/html - HTML generation patterns
 - skills/plainkit/svg - SVG elements
 - skills/plainkit/icons - Lucide icons
+- skills/testing/test-driven-development - TDD workflow
 
-*"The key to performance is elegance, not battalions of special cases."* — Jon Bentley and Doug McIlroy
+_"Simplicity is the ultimate sophistication."_ — Leonardo da Vinci
