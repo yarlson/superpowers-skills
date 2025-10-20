@@ -17,6 +17,88 @@ plainkit/htmx provides type-safe Go functions for all HTMX attributes, enabling 
 - skills/plainkit/html - Core HTML generation and type system
 - skills/plainkit/webapp - Architecture patterns and workflows
 
+## ⚠️ CRITICAL: HTTP Status Codes and Error Handling
+
+**HTMX ONLY SWAPS CONTENT ON 2xx STATUS CODES BY DEFAULT**
+
+This is the #1 mistake developers make with HTMX:
+
+### The Problem
+
+```go
+// ❌ WRONG - HTMX will NOT swap this response
+func HandleError(w http.ResponseWriter, r *http.Request) {
+    errorHTML := RenderErrorForm("Invalid input")
+    w.WriteHeader(http.StatusBadRequest) // 400 - HTMX ignores this!
+    w.Write([]byte(errorHTML))
+}
+```
+
+**What happens:** HTMX receives the response but **does not perform the swap** because the status code is 400. The error HTML is sent but never displayed. The user sees nothing.
+
+### The Solution
+
+**For HTMX requests, return 200 OK and convey errors through HTML content:**
+
+```go
+// ✅ CORRECT - HTMX will swap this response
+func HandleError(w http.ResponseWriter, r *http.Request) {
+    isHTMX := r.Header.Get("HX-Request") == "true"
+
+    if isHTMX {
+        // Return 200 with error in HTML content
+        errorHTML := RenderErrorForm("Invalid input") // Form with error banner
+        w.WriteHeader(http.StatusOK) // 200 - HTMX will swap
+        w.Write([]byte(errorHTML))
+    } else {
+        // Non-HTMX: use proper HTTP semantics
+        w.WriteHeader(http.StatusBadRequest) // 400 for full page
+        w.Write([]byte(RenderFullErrorPage("Invalid input")))
+    }
+}
+```
+
+### Key Rules
+
+1. **HTMX validation errors:** Return `200 OK` with error displayed in HTML (error banner, red text, etc.)
+2. **Non-HTMX requests:** Use proper HTTP status codes (400, 404, 500, etc.)
+3. **Detection:** Check `HX-Request` header to differentiate
+4. **Error display:** Put errors in the HTML content (e.g., form with error message)
+
+### Why This Design?
+
+HTMX is designed for **hypermedia exchanges**, not JSON APIs. Errors are conveyed through the HTML response (error messages, validation feedback), not HTTP status codes. This allows:
+- Progressive enhancement (graceful degradation without JS)
+- Semantic HTML error display
+- Consistent UX patterns
+
+### Alternative: Response-Targets Extension
+
+If you MUST use 4xx status codes, use the `response-targets` extension:
+
+```go
+// In HTML: add extension
+Div(
+    HxExt("response-targets"),
+    HxPost("/submit"),
+    HxTarget("#success-target"),           // 2xx responses
+    HxTargetError("#error-target"),        // 4xx/5xx responses
+)
+```
+
+But this is more complex and not the recommended approach for most cases.
+
+### Summary
+
+| Scenario | Status Code | Action |
+|----------|-------------|--------|
+| HTMX success | 200 OK | Swap content |
+| HTMX validation error | 200 OK | Swap content (with error displayed) |
+| HTMX server error | 500 | No swap (or use response-targets) |
+| Non-HTMX error | 400/500 | Full page render with proper status |
+
+**Remember:** For HTMX, semantic meaning is in the HTML, not the status code.
+
 ## Quick Reference
 
 ### HTTP Methods
@@ -641,6 +723,35 @@ Div(
 ```
 
 ## Common Mistakes
+
+**❌ THE #1 MISTAKE: Returning 4xx/5xx for validation errors**
+```go
+// ❌ HTMX WILL NOT SWAP THIS - error HTML is sent but never displayed!
+func HandleCreate(w http.ResponseWriter, r *http.Request) {
+    if invalid {
+        errorHTML := RenderForm("Invalid input")
+        w.WriteHeader(http.StatusBadRequest) // ❌ HTMX ignores 400!
+        w.Write([]byte(errorHTML))
+    }
+}
+```
+**✅ Correct**
+```go
+// ✅ HTMX WILL SWAP THIS - error displays inline
+func HandleCreate(w http.ResponseWriter, r *http.Request) {
+    isHTMX := r.Header.Get("HX-Request") == "true"
+
+    if invalid {
+        errorHTML := RenderForm("Invalid input") // Form with error banner
+        if isHTMX {
+            w.WriteHeader(http.StatusOK) // ✅ 200 for HTMX
+        } else {
+            w.WriteHeader(http.StatusBadRequest) // 400 for non-HTMX
+        }
+        w.Write([]byte(errorHTML))
+    }
+}
+```
 
 **❌ Missing HxEncoding for files**
 ```go
