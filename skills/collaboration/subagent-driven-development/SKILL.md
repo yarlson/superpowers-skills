@@ -2,7 +2,7 @@
 name: Subagent-Driven Development
 description: Execute implementation plan by dispatching fresh subagent for each task, with code review between tasks
 when_to_use: when executing implementation plans with independent tasks in the current session, using fresh subagents with review gates
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Subagent-Driven Development
@@ -49,13 +49,19 @@ Task tool (general-purpose):
     Read that task carefully. Your job is to:
     1. Implement exactly what the task specifies
     2. Write tests (following TDD if task says to)
-    3. Verify implementation works
-    4. Commit your work
-    5. Report back
+    3. VERIFY code compiles: run `go build` or equivalent
+    4. RUN LINTER: run `golangci-lint run --fix ./...` or equivalent
+    5. RUN ALL TESTS: run `go test ./... -race` or equivalent
+    6. FIX any compilation errors, linter issues, or test failures
+    7. ONLY commit when: compiles ✓, lints ✓, all tests pass ✓
+    8. Report back
 
     Work from: [directory]
 
-    Report: What you implemented, what you tested, test results, files changed, any issues
+    CRITICAL: NEVER commit code that doesn't compile, has linter errors, or has failing tests.
+    If you cannot fix an issue, report it - do NOT commit broken code.
+
+    Report: What you implemented, compilation status, linter status, test results, files changed, any issues
 ```
 
 **Subagent reports back** with summary of work.
@@ -170,10 +176,25 @@ Done!
 - Proceed with unfixed Critical issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
 - Implement without reading plan task
+- **Commit code that doesn't compile**
+- **Commit code with linter errors**
+- **Commit code with failing tests**
+- Accept "expected compilation errors" or "will fix in next task"
 
 **If subagent fails task:**
 - Dispatch fix subagent with specific instructions
 - Don't try to fix manually (context pollution)
+
+**Quality Gates (ALL must pass before committing):**
+1. ✓ Code compiles without errors
+2. ✓ Linter passes (0 issues)
+3. ✓ All tests pass (0 failures)
+4. ✓ No regressions in existing functionality
+
+**If ANY quality gate fails:**
+- DO NOT commit
+- Fix the issue or report blocker
+- NEVER rationalize broken builds
 
 ## Integration
 
