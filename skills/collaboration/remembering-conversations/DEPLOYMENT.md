@@ -21,6 +21,7 @@ cd ~/.claude/skills/collaboration/remembering-conversations/tool
 ```
 
 **Expected results:**
+
 - Hook installed at `~/.claude/hooks/sessionEnd`
 - Summaries created for all conversations (50-120 words each)
 - Search returns relevant results in <1 second
@@ -44,29 +45,30 @@ cd ~/.claude/skills/collaboration/remembering-conversations/tool
 ```
 
 If issues found:
+
 ```bash
 ./index-conversations --repair
 ```
 
 ### After System Changes
 
-| Change | Action |
-|--------|--------|
-| Moved conversation archive | Update paths in code, run `--rebuild` |
-| Updated CLAUDE.md | Run `--verify` to check for issues |
-| Changed database schema | Backup DB, run `--rebuild` |
-| Hook not running | Check executable: `chmod +x ~/.claude/hooks/sessionEnd` |
+| Change                     | Action                                                  |
+| -------------------------- | ------------------------------------------------------- |
+| Moved conversation archive | Update paths in code, run `--rebuild`                   |
+| Updated CLAUDE.md          | Run `--verify` to check for issues                      |
+| Changed database schema    | Backup DB, run `--rebuild`                              |
+| Hook not running           | Check executable: `chmod +x ~/.claude/hooks/sessionEnd` |
 
 ## Recovery Scenarios
 
-| Issue | Diagnosis | Fix |
-|-------|-----------|-----|
-| **Missing summaries** | `--verify` shows "Missing summaries: N" | `--repair` regenerates missing summaries |
-| **Orphaned DB entries** | `--verify` shows "Orphaned entries: N" | `--repair` removes orphaned entries |
-| **Outdated indexes** | `--verify` shows "Outdated files: N" | `--repair` re-indexes modified files |
-| **Corrupted database** | Errors during search/verify | `--rebuild` (re-indexes everything, requires confirmation) |
-| **Hook not running** | No summaries for new conversations | See Troubleshooting below |
-| **Slow indexing** | Takes >30 sec per conversation | Check API key, network, Haiku fallback in logs |
+| Issue                   | Diagnosis                               | Fix                                                        |
+| ----------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| **Missing summaries**   | `--verify` shows "Missing summaries: N" | `--repair` regenerates missing summaries                   |
+| **Orphaned DB entries** | `--verify` shows "Orphaned entries: N"  | `--repair` removes orphaned entries                        |
+| **Outdated indexes**    | `--verify` shows "Outdated files: N"    | `--repair` re-indexes modified files                       |
+| **Corrupted database**  | Errors during search/verify             | `--rebuild` (re-indexes everything, requires confirmation) |
+| **Hook not running**    | No summaries for new conversations      | See Troubleshooting below                                  |
+| **Slow indexing**       | Takes >30 sec per conversation          | Check API key, network, Haiku fallback in logs             |
 
 ## Monitoring
 
@@ -97,6 +99,7 @@ ls -lh ~/.config/superpowers/conversation-index/db.sqlite
 ### Log Output
 
 Normal indexing:
+
 ```
 Initializing database...
 Loading embedding model...
@@ -107,6 +110,7 @@ Processing project: my-project (3 conversations)
 ```
 
 Verification with issues:
+
 ```
 Verifying conversation index...
 Verified 100 conversations.
@@ -127,6 +131,7 @@ Run with --repair to fix these issues.
 **Symptoms:** New conversations not indexed automatically
 
 **Diagnosis:**
+
 ```bash
 # 1. Check hook exists and is executable
 ls -l ~/.claude/hooks/sessionEnd
@@ -145,6 +150,7 @@ SESSION_ID=test-$(date +%s) ~/.claude/hooks/sessionEnd
 ```
 
 **Fix:**
+
 ```bash
 # Make hook executable
 chmod +x ~/.claude/hooks/sessionEnd
@@ -158,6 +164,7 @@ chmod +x ~/.claude/hooks/sessionEnd
 **Symptoms:** Verify shows missing summaries, repair fails
 
 **Diagnosis:**
+
 ```bash
 # Check API key
 echo $ANTHROPIC_API_KEY
@@ -169,6 +176,7 @@ grep -i error index.log
 ```
 
 **Fix:**
+
 ```bash
 # Set API key if missing
 export ANTHROPIC_API_KEY="your-key-here"
@@ -185,6 +193,7 @@ sleep 60 && ./index-conversations --repair
 **Symptoms:** `./search-conversations "query"` returns no results
 
 **Diagnosis:**
+
 ```bash
 # 1. Verify conversations indexed
 ./index-conversations --verify
@@ -202,6 +211,7 @@ sqlite3 ~/.config/superpowers/conversation-index/db.sqlite "SELECT COUNT(*) FROM
 ```
 
 **Fix:**
+
 ```bash
 # If database missing or corrupt
 ./index-conversations --rebuild
@@ -219,6 +229,7 @@ rm -rf ~/.cache/transformers  # Force re-download
 **Symptoms:** Errors like "database disk image is malformed"
 
 **Fix:**
+
 ```bash
 # 1. Backup current database
 cp ~/.config/superpowers/conversation-index/db.sqlite ~/.config/superpowers/conversation-index/db.sqlite.backup
@@ -270,12 +281,14 @@ cp ~/.config/superpowers/conversation-index/db.sqlite ~/.config/superpowers/conv
 **Template:** `tool/prompts/search-agent.md`
 
 **Key requirements:**
+
 - Synthesis must be 200-1000 words (Summary section)
 - All sources must include: project, date, file path, status
 - No raw conversation excerpts (synthesize instead)
 - Follow-up via subagent (not direct file reads)
 
 **Manual test checklist:**
+
 1. ✓ Dispatch subagent with search template
 2. ✓ Verify synthesis 200-1000 words
 3. ✓ Verify all sources have metadata (project, date, path, status)
@@ -312,6 +325,7 @@ cp ~/.config/superpowers/conversation-index/db.sqlite ~/.config/superpowers/conv
 ## Deployment Checklist
 
 ### Initial Setup
+
 - [ ] Hook installed: `./install-hook`
 - [ ] Existing conversations indexed: `./index-conversations`
 - [ ] Verification clean: `./index-conversations --verify`
@@ -319,11 +333,13 @@ cp ~/.config/superpowers/conversation-index/db.sqlite ~/.config/superpowers/conv
 - [ ] Subagent template exists: `ls tool/prompts/search-agent.md`
 
 ### Ongoing
+
 - [ ] Weekly: Run `--verify` and `--repair` if needed
 - [ ] After system changes: Re-verify
 - [ ] Monitor: Check hook runs (summaries appear for new conversations)
 
 ### Testing
+
 - [ ] Run end-to-end tests: `./test-deployment.sh`
 - [ ] All 5 scenarios pass
 - [ ] Manual subagent test (see scenario 5 in test output)

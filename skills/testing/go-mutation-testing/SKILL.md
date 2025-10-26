@@ -16,10 +16,12 @@ Mutation testing validates that tests actually catch bugs, not just execute code
 ⚠️ **ALWAYS use gremlins, NEVER use go-mutesting**
 
 **Why:**
+
 - `gremlins` - actively maintained, Go 1.22+ compatible, production-ready
 - `go-mutesting` - abandoned since 2021, crashes on modern Go with segfault
 
 **Installation:**
+
 ```bash
 go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
 ```
@@ -31,16 +33,19 @@ go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
 ### Critical Paths (Always Run, Even Under Time Pressure)
 
 **Security & Access:**
+
 - Authentication (passwords, sessions, JWTs)
 - Authorization (permissions, access control)
 - Cryptography (encryption, hashing, signing)
 
 **Financial:**
+
 - Payment processing
 - Billing calculations
 - Transaction handling
 
 **Data Integrity:**
+
 - Data validation
 - Input sanitization
 - State management for critical operations
@@ -62,6 +67,7 @@ go install github.com/go-gremlins/gremlins/cmd/gremlins@latest
    - Non-critical → Can skip, but document as tech debt
 
 2. **Compromise option for critical paths:**
+
    ```bash
    # Run on critical module only (5-10 min) instead of full codebase
    gremlins unleash ./internal/auth
@@ -109,6 +115,7 @@ gremlins unleash ./internal/service --output results.json
 ## Results Interpretation
 
 **You already know this!** Agents interpret gremlins output correctly without guidance:
+
 - TEST EFFICACY = % of mutations killed by tests (target >85%)
 - MUTATOR COVERAGE = % of mutation points tested (target 100%)
 - KILLED = tests caught the bug (good)
@@ -120,6 +127,7 @@ If user asks how to interpret results or improve low scores, trust your instinct
 ## That's It
 
 This skill exists to fix two specific failures:
+
 1. Tool selection: prevent recommending go-mutesting
 2. Critical path recognition: flag security code requires mutation testing
 

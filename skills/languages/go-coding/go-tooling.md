@@ -44,6 +44,7 @@ replace github.com/someorg/lib => github.com/myorg/lib-fork v1.2.4
 ```
 
 **Remove replace:**
+
 ```bash
 go mod edit -dropreplace github.com/someorg/lib
 ```
@@ -114,6 +115,7 @@ go run -race main.go
 ```
 
 **What it catches:**
+
 - Concurrent reads/writes to same variable
 - Data races in goroutines
 - Unsafe concurrent map access
@@ -162,6 +164,7 @@ go test -tags=integration ./...
 ```
 
 **Build tags in test files:**
+
 ```go
 //go:build integration
 
@@ -227,6 +230,7 @@ goimports -w .
 ```
 
 **Automatically:**
+
 - Adds missing imports
 - Removes unused imports
 - Groups imports (stdlib → external → internal)
@@ -274,19 +278,19 @@ Create `.golangci.yml` in project root:
 ```yaml
 linters:
   enable:
-    - errcheck      # Check error returns
-    - gosimple      # Simplify code
-    - govet         # Go vet
-    - ineffassign   # Detect ineffective assignments
-    - staticcheck   # Static analysis
-    - unused        # Detect unused code
-    - misspell      # Spelling
-    - gofmt         # Format check
-    - goimports     # Import check
+    - errcheck # Check error returns
+    - gosimple # Simplify code
+    - govet # Go vet
+    - ineffassign # Detect ineffective assignments
+    - staticcheck # Static analysis
+    - unused # Detect unused code
+    - misspell # Spelling
+    - gofmt # Format check
+    - goimports # Import check
 
 linters-settings:
   errcheck:
-    check-blank: true  # Check _ assignments
+    check-blank: true # Check _ assignments
 
   govet:
     check-shadowing: true
@@ -303,17 +307,17 @@ run:
 
 ### Recommended Linters
 
-| Linter | Purpose |
-|--------|---------|
-| errcheck | Checks unchecked errors |
-| gosimple | Simplifies code |
-| govet | Official Go analysis |
-| staticcheck | Advanced static analysis |
-| unused | Finds unused code |
+| Linter      | Purpose                     |
+| ----------- | --------------------------- |
+| errcheck    | Checks unchecked errors     |
+| gosimple    | Simplifies code             |
+| govet       | Official Go analysis        |
+| staticcheck | Advanced static analysis    |
+| unused      | Finds unused code           |
 | ineffassign | Detects useless assignments |
-| misspell | Catches spelling errors |
-| gofmt | Ensures formatting |
-| goimports | Checks import organization |
+| misspell    | Catches spelling errors     |
+| gofmt       | Ensures formatting          |
+| goimports   | Checks import organization  |
 
 ### CI Integration
 
@@ -360,6 +364,7 @@ GOOS=darwin GOARCH=arm64 go build -o myapp-mac-arm
 ```
 
 **Common platforms:**
+
 - `linux/amd64` - Linux servers
 - `darwin/amd64` - Intel Macs
 - `darwin/arm64` - Apple Silicon Macs
@@ -440,6 +445,7 @@ go generate -v ./...
 ```
 
 **Common uses:**
+
 - Mock generation (moq, mockgen)
 - String generation (stringer)
 - Asset embedding
@@ -469,6 +475,7 @@ dlv attach <pid>
 ```
 
 **Basic commands:**
+
 ```
 break main.main    # Set breakpoint
 continue           # Continue execution
@@ -539,6 +546,7 @@ go vet -composites=false ./...
 ```
 
 **What it catches:**
+
 - Printf format errors
 - Unreachable code
 - Invalid struct tags
@@ -616,7 +624,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: "1.21"
 
       - name: Install dependencies
         run: go mod download
@@ -638,15 +646,15 @@ jobs:
 
 ## Summary
 
-| Tool | Command | Purpose |
-|------|---------|---------|
-| **go mod** | `go mod tidy` | Manage dependencies |
-| **go test** | `go test -race ./...` | Run tests with race detection |
-| **goimports** | `goimports -w .` | Format and organize imports |
-| **golangci-lint** | `golangci-lint run` | Comprehensive linting |
-| **go build** | `go build -o app` | Build binary |
-| **go generate** | `go generate ./...` | Run code generators |
-| **dlv** | `dlv debug` | Interactive debugging |
-| **pprof** | `go tool pprof` | Performance profiling |
+| Tool              | Command               | Purpose                       |
+| ----------------- | --------------------- | ----------------------------- |
+| **go mod**        | `go mod tidy`         | Manage dependencies           |
+| **go test**       | `go test -race ./...` | Run tests with race detection |
+| **goimports**     | `goimports -w .`      | Format and organize imports   |
+| **golangci-lint** | `golangci-lint run`   | Comprehensive linting         |
+| **go build**      | `go build -o app`     | Build binary                  |
+| **go generate**   | `go generate ./...`   | Run code generators           |
+| **dlv**           | `dlv debug`           | Interactive debugging         |
+| **pprof**         | `go tool pprof`       | Performance profiling         |
 
 **Bottom line:** Set up these tools early in your project. Automate them in CI/CD. Run them before every commit.

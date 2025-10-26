@@ -14,6 +14,7 @@ plainkit/html is a function-based HTML component library for Go that generates H
 **Core principle:** Use compile-time type safety to prevent invalid HTML structures before runtime.
 
 **Related skills:**
+
 - skills/plainkit/svg - SVG elements and attributes
 - skills/plainkit/icons - Lucide icons library
 
@@ -111,11 +112,13 @@ func Input(args ...InputArg) Node {
 ### Global vs Element-Specific Attributes
 
 **Global attributes** work with ANY HTML element:
+
 - Implemented via `Global` type
-- Includes: class, id, data-*, aria-*, style, events
+- Includes: class, id, data-_, aria-_, style, events
 - Applied through closure pattern
 
 **Element-specific attributes** only work with their element:
+
 - Type-safe through element's Arg interface
 - Compile error if used incorrectly
 - Examples: `AHref()` only for links, `AType()` for inputs/buttons
@@ -135,21 +138,25 @@ A(ARequired())            // Required not valid for A
 ### When to Use What
 
 **T() - Text content:**
+
 - Simple text that needs escaping
 - User-generated content
 - Any string that might contain HTML
 
 **UnsafeText() - Raw HTML:**
+
 - Pre-sanitized HTML from trusted sources
 - Generated HTML from other libraries
 - Use with caution
 
 **Child() / C() - Single component:**
+
 - Passing one component as child
 - Works with any Component type
 - Most common for direct nesting
 
 **Fragment() / F() - Multiple children:**
+
 - Rendering list items without wrapper
 - Conditional groups of elements
 - When you have []Component to render
@@ -476,8 +483,8 @@ When building with plainkit/html:
 - [ ] Build conditional children in slice, then spread to `Fragment()`
 - [ ] Use `Child()` / `C()` to safely wrap any component
 - [ ] Avoid children on void elements (input, br, hr, img, etc.)
-- [ ] Use `AData()` for data-* attributes
-- [ ] Use `AAria()` for aria-* attributes
+- [ ] Use `AData()` for data-\* attributes
+- [ ] Use `AAria()` for aria-\* attributes
 - [ ] Use `ACustom()` for framework-specific attributes (htmx, alpine)
 - [ ] Test components by rendering to string
 
@@ -506,5 +513,6 @@ plainkit/html provides compile-time type safety for HTML generation through:
 The library enforces correctness at compile time, preventing invalid HTML structures before runtime.
 
 **Related skills:**
+
 - skills/plainkit/svg - SVG elements and attributes with composition limitations
 - skills/plainkit/icons - 1000+ Lucide icons with sensible defaults

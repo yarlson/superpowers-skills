@@ -6,6 +6,7 @@ Use this page to document skills you wish existed. Add requests here when you en
 
 ```markdown
 ## [Short Descriptive Name]
+
 **What I need:** One-line description
 **When I'd use it:** Specific situations/symptoms
 **Why I need this:** What makes this non-obvious or worth capturing

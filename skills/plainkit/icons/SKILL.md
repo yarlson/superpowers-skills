@@ -14,6 +14,7 @@ PlainKit includes a comprehensive icon library at `github.com/plainkit/icons/luc
 **Core principle:** Use Lucide icons for all SVG icons instead of building custom SVG - they're pre-tested, accessible, and consistent.
 
 **Related skills:**
+
 - skills/plainkit/html - Core HTML patterns and composition
 - skills/plainkit/svg - Custom SVG elements and attributes
 
@@ -91,16 +92,16 @@ lucide.Star(html.AWidth("20"), html.AHeight("20"))
 
 All Lucide icons come with sensible defaults:
 
-| Property | Default Value |
-|----------|---------------|
-| **Size** | 24x24 pixels |
-| **ViewBox** | "0 0 24 24" |
-| **Fill** | "none" |
-| **Stroke** | "currentColor" (inherits text color) |
-| **Stroke Width** | "2" |
-| **Stroke Linecap** | "round" |
-| **Stroke Linejoin** | "round" |
-| **Class** | "lucide lucide-{icon-name}" |
+| Property            | Default Value                        |
+| ------------------- | ------------------------------------ |
+| **Size**            | 24x24 pixels                         |
+| **ViewBox**         | "0 0 24 24"                          |
+| **Fill**            | "none"                               |
+| **Stroke**          | "currentColor" (inherits text color) |
+| **Stroke Width**    | "2"                                  |
+| **Stroke Linecap**  | "round"                              |
+| **Stroke Linejoin** | "round"                              |
+| **Class**           | "lucide lucide-{icon-name}"          |
 
 ### Color Inheritance
 
@@ -348,5 +349,6 @@ Lucide icons for plainkit/html provide:
 6. **Tested** - Pre-built, working SVG components
 
 **Related skills:**
+
 - skills/plainkit/html - Core HTML patterns and composition
 - skills/plainkit/svg - Custom SVG for special cases

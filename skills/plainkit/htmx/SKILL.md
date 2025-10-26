@@ -14,6 +14,7 @@ plainkit/htmx provides type-safe Go functions for all HTMX attributes, enabling 
 **Core principle:** Build interactive web applications using declarative HTML attributes and server-side rendering, avoiding client-side JavaScript complexity.
 
 **Related skills:**
+
 - skills/plainkit/html - Core HTML generation and type system
 - skills/plainkit/webapp - Architecture patterns and workflows
 
@@ -68,6 +69,7 @@ func HandleError(w http.ResponseWriter, r *http.Request) {
 ### Why This Design?
 
 HTMX is designed for **hypermedia exchanges**, not JSON APIs. Errors are conveyed through the HTML response (error messages, validation feedback), not HTTP status codes. This allows:
+
 - Progressive enhancement (graceful degradation without JS)
 - Semantic HTML error display
 - Consistent UX patterns
@@ -90,12 +92,12 @@ But this is more complex and not the recommended approach for most cases.
 
 ### Summary
 
-| Scenario | Status Code | Action |
-|----------|-------------|--------|
-| HTMX success | 200 OK | Swap content |
-| HTMX validation error | 200 OK | Swap content (with error displayed) |
-| HTMX server error | 500 | No swap (or use response-targets) |
-| Non-HTMX error | 400/500 | Full page render with proper status |
+| Scenario              | Status Code | Action                              |
+| --------------------- | ----------- | ----------------------------------- |
+| HTMX success          | 200 OK      | Swap content                        |
+| HTMX validation error | 200 OK      | Swap content (with error displayed) |
+| HTMX server error     | 500         | No swap (or use response-targets)   |
+| Non-HTMX error        | 400/500     | Full page render with proper status |
 
 **Remember:** For HTMX, semantic meaning is in the HTML, not the status code.
 
@@ -147,17 +149,17 @@ HxBoost(bool)      // Progressive enhancement
 
 HTMX provides 9 swap strategies for different content update patterns:
 
-| Strategy | Effect | Common Use Case |
-|----------|--------|-----------------|
-| `innerHTML` | Replace inner HTML (default) | Update content area |
-| `outerHTML` | Replace entire element | Swap display/edit modes |
-| `textContent` | Replace text only (no HTML parsing) | Safe user text display |
-| `beforebegin` | Insert before element | Prepend siblings |
-| `afterbegin` | Insert before first child | Prepend children |
-| `beforeend` | Insert after last child | Infinite scroll, append items |
-| `afterend` | Insert after element | Append siblings |
-| `delete` | Delete element | Remove items (ignore response) |
-| `none` | No swap (OOB only) | Side effects without main update |
+| Strategy      | Effect                              | Common Use Case                  |
+| ------------- | ----------------------------------- | -------------------------------- |
+| `innerHTML`   | Replace inner HTML (default)        | Update content area              |
+| `outerHTML`   | Replace entire element              | Swap display/edit modes          |
+| `textContent` | Replace text only (no HTML parsing) | Safe user text display           |
+| `beforebegin` | Insert before element               | Prepend siblings                 |
+| `afterbegin`  | Insert before first child           | Prepend children                 |
+| `beforeend`   | Insert after last child             | Infinite scroll, append items    |
+| `afterend`    | Insert after element                | Append siblings                  |
+| `delete`      | Delete element                      | Remove items (ignore response)   |
+| `none`        | No swap (OOB only)                  | Side effects without main update |
 
 ### Swap Modifiers
 
@@ -200,6 +202,7 @@ Button(
 ```
 
 **Sync Strategies:**
+
 - `drop` - Ignore new request if one in-flight
 - `abort` - Cancel current, run new one
 - `replace` - Cancel current, replace with new
@@ -240,6 +243,7 @@ Button(
 ```
 
 **OOB Swap Values:**
+
 - `"true"` - outerHTML (replace entire element)
 - `"innerHTML"` - Replace content only
 - `"outerHTML:#custom-id"` - Explicit target
@@ -278,6 +282,7 @@ HxTrigger("keyup[key=='Enter']")           // Only on Enter key
 ```
 
 **Common Patterns:**
+
 - Search: `"keyup changed delay:500ms"`
 - Infinite scroll: `"revealed"`
 - Auto-save: `"change delay:1s"`
@@ -336,6 +341,7 @@ Form(
 ```
 
 **Key Requirements:**
+
 - `HxEncoding("multipart/form-data")` is mandatory
 - Can be on `<form>` or `<button>`
 - Server handles as standard multipart upload
@@ -367,6 +373,7 @@ HxReplaceUrl("/different-url")
 ```
 
 **When to Use:**
+
 - **Push:** Navigation where user expects back button (tabs, pages, filters)
 - **Replace:** Temporary states where back button shouldn't reverse every action (form steps, modals)
 
@@ -392,6 +399,7 @@ Body(
 ```
 
 **Boost Behavior:**
+
 - Converts links to AJAX GET
 - Converts forms to AJAX using form method
 - Targets `<body>` with `innerHTML` by default
@@ -399,6 +407,7 @@ Body(
 - Updates browser history automatically
 
 **Use Cases:**
+
 - Progressive enhancement (works without JS)
 - Quick HTMX adoption without HTML changes
 - Faster navigation for multi-page apps
@@ -439,6 +448,7 @@ HxExt("json-enc, response-targets")
 ```
 
 **Common Extensions:**
+
 - `json-enc` - Send JSON instead of form-data
 - `morphdom` - DOM morphing for minimal updates
 - `response-targets` - Custom targets based on response status
@@ -493,6 +503,96 @@ Div(
     HxWs("connect:/ws"),
 )
 ```
+
+## Unified Endpoints: Full Page + Fragment Pattern
+
+**Best Practice:** Use a single endpoint that serves both full pages and HTMX fragments based on the `HX-Request` header. This eliminates duplicate routes and ensures consistent filtering/state management.
+
+### The Pattern
+
+```go
+// Single endpoint: GET /items
+func (h *Handler) HandleItems(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()
+
+    // Parse query parameters (filters, pagination, etc.)
+    filter := r.URL.Query().Get("status")
+
+    // Business logic (same for both cases)
+    items, err := h.store.GetItems(ctx, filter)
+    if err != nil {
+        http.Error(w, "Failed to load items", http.StatusInternalServerError)
+        return
+    }
+
+    // Check if this is an HTMX request
+    if r.Header.Get("HX-Request") == "true" {
+        // Return fragment only (for polling/partial updates)
+        w.Header().Set("Content-Type", "text/html; charset=utf-8")
+        _, _ = fmt.Fprint(w, html.Render(components.ItemList(ctx, items)))
+        return
+    }
+
+    // Build full request URL with query params for polling
+    requestURL := r.URL.Path
+    if r.URL.RawQuery != "" {
+        requestURL = r.URL.Path + "?" + r.URL.RawQuery
+    }
+
+    // Return full page (for direct access/refresh)
+    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+    page := pages.ItemsPage(ctx, items, requestURL)
+    _, _ = fmt.Fprint(w, "<!DOCTYPE html>\n")
+    _, _ = fmt.Fprint(w, html.Render(page))
+}
+```
+
+### Template: Pass Request URL for Polling
+
+```go
+// pages/items.go
+func ItemsPage(ctx context.Context, items []*Item, requestURL string) Node {
+    return layout.Base(
+        "Items",
+        Div(
+            H1(T("Items")),
+
+            // Filter controls (static - outside polling container)
+            Div(
+                A(AHref("/items?status=active"), T("Active")),
+                A(AHref("/items?status=completed"), T("Completed")),
+            ),
+
+            // Polling container - uses SAME URL (preserves filters!)
+            Div(
+                AId("items-container"),
+                HxGet(requestURL),  // ✅ Includes query params like ?status=active
+                HxTrigger("every 5s"),
+                HxSwap("innerHTML"),
+
+                // Fragment content
+                components.ItemList(ctx, items),
+            ),
+        ),
+    )
+}
+```
+
+### Benefits
+
+1. **Single source of truth** - One endpoint, one set of business logic
+2. **Automatic filter preservation** - Polling inherits all query parameters
+3. **Simpler routing** - No separate `/items/table` endpoint needed
+4. **Consistent behavior** - Both full page and fragments see same data/filters
+5. **Easier testing** - Test one endpoint, both modes work
+
+### When to Use This Pattern
+
+- ✅ Polling/auto-refresh with filters
+- ✅ Pages with query parameters (search, pagination, filters)
+- ✅ Any endpoint that needs both full page and fragment views
+- ❌ Complex forms with different validation rules for HTMX vs non-HTMX
+- ❌ Endpoints that fundamentally return different data structures
 
 ## Common Patterns
 
@@ -655,6 +755,7 @@ Script(ASrc("/js/htmx.min.js"))
 ```
 
 **Benefits:**
+
 - No CDN dependency
 - Single binary deployment
 - Works offline
@@ -725,6 +826,7 @@ Div(
 ## Common Mistakes
 
 **❌ THE #1 MISTAKE: Returning 4xx/5xx for validation errors**
+
 ```go
 // ❌ HTMX WILL NOT SWAP THIS - error HTML is sent but never displayed!
 func HandleCreate(w http.ResponseWriter, r *http.Request) {
@@ -735,7 +837,9 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
     }
 }
 ```
+
 **✅ Correct**
+
 ```go
 // ✅ HTMX WILL SWAP THIS - error displays inline
 func HandleCreate(w http.ResponseWriter, r *http.Request) {
@@ -754,37 +858,49 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 ```
 
 **❌ Missing HxEncoding for files**
+
 ```go
 Form(HxPost("/upload"), Input(AType("file")))  // ❌ Won't work
 ```
+
 **✅ Correct**
+
 ```go
 Form(HxPost("/upload"), HxEncoding("multipart/form-data"), Input(AType("file")))
 ```
 
 **❌ OOB swap without ID**
+
 ```go
 Span(HxSwapOob("true"), T("content"))  // ❌ No target
 ```
+
 **✅ Correct**
+
 ```go
 Span(AId("target"), HxSwapOob("true"), T("content"))
 ```
 
 **❌ Race conditions in validation**
+
 ```go
 Input(HxGet("/validate"), HxTrigger("keyup"))  // ❌ Fires too often
 ```
+
 **✅ Correct**
+
 ```go
 Input(HxGet("/validate"), HxTrigger("keyup changed delay:500ms"), HxSync("this:replace"))
 ```
 
 **❌ Pushing URL that doesn't return full page**
+
 ```go
 Button(HxGet("/partial"), HxPushUrl("true"))  // ❌ Bookmark won't work
 ```
+
 **✅ Correct**
+
 ```go
 // Ensure /partial returns full page when accessed directly, or use HxReplaceUrl
 ```
@@ -803,7 +919,9 @@ plainkit/htmx provides type-safe Go functions for all HTMX attributes:
 8. **History** - HxPushUrl vs HxReplaceUrl
 9. **Progressive enhancement** - HxBoost for quick AJAX adoption
 10. **Type safety** - All attributes return html.Global, work with any element
+11. **Unified endpoints** - Single endpoint pattern for full page + HTMX fragments with automatic query param preservation
 
 **Related skills:**
+
 - skills/plainkit/html - Core HTML generation patterns
 - skills/plainkit/webapp - Full architecture and TDD workflow

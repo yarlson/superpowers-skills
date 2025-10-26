@@ -14,6 +14,7 @@ plainkit/html provides SVG support with the same type-safe approach as HTML elem
 **Core principle:** Use basic SVG elements directly under root `Svg()`, or use skills/plainkit/icons for complex compositions.
 
 **Related skills:**
+
 - skills/plainkit/html - Core HTML patterns, attributes, and composition
 - skills/plainkit/icons - Pre-built Lucide icons for complex SVG needs
 
@@ -208,6 +209,7 @@ label := SvgText(
 ### Why This Happens
 
 The library is missing `Apply*` methods for SVG element composition:
+
 - `Node` doesn't implement `ApplyG`, `ApplyText`, etc.
 - `TxtOpt` doesn't implement `ApplyText`
 - Child SVG elements cannot be passed to parent SVG elements
@@ -317,10 +319,12 @@ plainkit/html provides type-safe SVG element creation with:
 4. **Composition limitations** - Nested SVG elements not supported
 
 **For complex SVG:**
+
 - Use skills/plainkit/icons for pre-built icons
 - Use `UnsafeText()` for custom nested SVG
 - Keep composition flat under root `Svg()` element
 
 **Related skills:**
+
 - skills/plainkit/html - Core patterns and composition
 - skills/plainkit/icons - 1000+ pre-built Lucide icons

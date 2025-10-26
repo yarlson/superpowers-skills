@@ -3,6 +3,7 @@
 You are searching historical Claude Code conversations for relevant context.
 
 **Your task:**
+
 1. Search conversations for: {TOPIC}
 2. Read the top 2-5 most relevant results
 3. Synthesize key findings (max 1000 words)
@@ -17,6 +18,7 @@ You are searching historical Claude Code conversations for relevant context.
 {FOCUS_AREAS}
 
 Example focus areas:
+
 - What was the problem or question?
 - What solution was chosen and why?
 - What alternatives were considered and rejected?
@@ -27,11 +29,13 @@ Example focus areas:
 ## How to Search
 
 Run:
+
 ```bash
 ~/.claude/skills/collaboration/remembering-conversations/tool/search-conversations "{SEARCH_QUERY}"
 ```
 
 This returns:
+
 - Project name and date
 - Conversation summary (AI-generated)
 - Matched exchange with similarity score
@@ -44,7 +48,9 @@ Read the full conversations for top 2-5 results to get complete context.
 **Required structure:**
 
 ### Summary
+
 [Synthesize findings in 200-1000 words. Adapt structure to what you found:
+
 - Quick answer? 1-2 paragraphs.
 - Complex topic? Use sections (Context/Solution/Rationale/Lessons/Code).
 - Multiple approaches? Compare and contrast.
@@ -53,6 +59,7 @@ Read the full conversations for top 2-5 results to get complete context.
 Focus on actionable insights for the current task.]
 
 ### Sources
+
 [List ALL conversations examined, in order of relevance:]
 
 **1. [project-name, YYYY-MM-DD]** - X% match
@@ -70,6 +77,7 @@ Status: ...
 ### For Follow-Up
 
 Main agent can:
+
 - Ask you to dig deeper into specific source (#1, #2, etc.)
 - Ask you to read adjacent exchanges in a conversation
 - Ask you to search with refined query
@@ -78,6 +86,7 @@ Main agent can:
 ## Critical Rules
 
 **DO:**
+
 - Search using the provided query
 - Read full conversations for top results
 - Synthesize into actionable insights (200-1000 words)
@@ -86,6 +95,7 @@ Main agent can:
 - Include specific details (function names, error messages, line numbers)
 
 **DO NOT:**
+
 - Include raw conversation excerpts (synthesize instead)
 - Paste full file contents
 - Add meta-commentary ("I searched and found...")
@@ -94,7 +104,7 @@ Main agent can:
 
 ## Example Output
 
-```
+````
 ### Summary
 
 developer needed to handle authentication errors in React Router 7 data loaders
@@ -124,7 +134,7 @@ if (!response.ok) throw { status: response.status, message: 'Failed' };
 // In ErrorBoundary
 const error = useRouteError();
 if (error.status === 401) navigate('/login?return=' + location.pathname);
-```
+````
 
 ### Sources
 
@@ -146,12 +156,15 @@ Status: Read in detail (discovered gotchas about keys and expired tokens)
 ### For Follow-Up
 
 Main agent can ask me to:
+
 - Dig deeper into source #1 (full error handling evolution)
 - Read adjacent exchanges in #3 (more debugging context)
 - Search for "React Router error boundary patterns" more broadly
+
 ```
 
 This output:
 - Synthesis: ~350 words (actionable, specific)
 - Sources: Full metadata for 3 conversations
 - Enables iteration without context bloat
+```

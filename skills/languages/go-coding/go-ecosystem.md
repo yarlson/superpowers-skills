@@ -40,6 +40,7 @@ func Execute() error {
 ```
 
 **Key Features:**
+
 - Subcommands (git-style: `app command subcommand`)
 - Flags (persistent and local)
 - Automatic help generation
@@ -47,6 +48,7 @@ func Execute() error {
 - `RunE` for error propagation
 
 **Project Structure:**
+
 ```
 myapp/
 ├── main.go              # Entry: cmd.Execute()
@@ -83,6 +85,7 @@ func main() {
 ```
 
 **.env file:**
+
 ```bash
 DB_HOST=localhost
 DB_PORT=5432
@@ -90,6 +93,7 @@ API_KEY=secret123
 ```
 
 **Best practices:**
+
 - Never commit .env files (add to .gitignore)
 - Provide .env.example with dummy values
 - Use `godotenv.Load()` in main.go or init()
@@ -167,6 +171,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 ```
 
 **Middleware pattern:**
+
 ```go
 func loggingMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -213,6 +218,7 @@ func getUser(c *gin.Context) {
 ```
 
 **Middleware:**
+
 ```go
 func AuthMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
@@ -229,6 +235,7 @@ api.Use(AuthMiddleware())
 ```
 
 **Request binding:**
+
 ```go
 type CreateUserRequest struct {
     Name  string `json:"name" binding:"required"`
@@ -299,6 +306,7 @@ db.Unscoped().Delete(&user, 1)
 ```
 
 **Associations:**
+
 ```go
 type User struct {
     gorm.Model
@@ -318,6 +326,7 @@ db.Preload("Profile").First(&user, 1)
 ```
 
 **Transactions:**
+
 ```go
 err := db.Transaction(func(tx *gorm.DB) error {
     if err := tx.Create(&user).Error; err != nil {
@@ -331,6 +340,7 @@ err := db.Transaction(func(tx *gorm.DB) error {
 ```
 
 **Best Practices:**
+
 - Use `gorm.Model` for standard fields (ID, CreatedAt, UpdatedAt, DeletedAt)
 - Always check `.Error` on operations
 - Use transactions for multi-step operations
@@ -368,6 +378,7 @@ func TestUserService(t *testing.T) {
 ```
 
 **Table-driven tests:**
+
 ```go
 func TestAdd(t *testing.T) {
     tests := []struct {
@@ -390,6 +401,7 @@ func TestAdd(t *testing.T) {
 ```
 
 **Test suites:**
+
 ```go
 import "github.com/stretchr/testify/suite"
 
@@ -435,11 +447,13 @@ type UserRepository interface {
 ```
 
 **Run generation:**
+
 ```bash
 go generate ./...
 ```
 
 **Use in tests:**
+
 ```go
 func TestUserService_GetUser(t *testing.T) {
     mockRepo := &UserRepositoryMock{
@@ -478,6 +492,7 @@ func TestHealthHandler(t *testing.T) {
 ```
 
 **Testing Gin handlers:**
+
 ```go
 func TestGetUser(t *testing.T) {
     gin.SetMode(gin.TestMode)
@@ -579,6 +594,7 @@ if err != nil {
 ```
 
 **Custom validation:**
+
 ```go
 validate.RegisterValidation("username", func(fl validator.FieldLevel) bool {
     username := fl.Field().String()
@@ -627,19 +643,19 @@ err := json.Unmarshal(data, &user)
 
 ## Summary
 
-| Category | Library | When to Use |
-|----------|---------|-------------|
-| CLI | cobra | All CLI apps |
-| Config | godotenv | .env files |
-| Config | viper | Complex config |
-| Config | envconfig | Type-safe env vars |
-| HTTP | net/http | Small projects |
-| HTTP | gin | Production APIs |
-| Database | gorm | All database work |
-| Testing | testify | All tests |
-| Mocking | moq | Mock generation |
-| Logging | slog | Most apps (Go 1.21+) |
-| Logging | zerolog/zap | High performance |
-| Validation | validator/v10 | Struct validation |
+| Category   | Library       | When to Use          |
+| ---------- | ------------- | -------------------- |
+| CLI        | cobra         | All CLI apps         |
+| Config     | godotenv      | .env files           |
+| Config     | viper         | Complex config       |
+| Config     | envconfig     | Type-safe env vars   |
+| HTTP       | net/http      | Small projects       |
+| HTTP       | gin           | Production APIs      |
+| Database   | gorm          | All database work    |
+| Testing    | testify       | All tests            |
+| Mocking    | moq           | Mock generation      |
+| Logging    | slog          | Most apps (Go 1.21+) |
+| Logging    | zerolog/zap   | High performance     |
+| Validation | validator/v10 | Struct validation    |
 
 **Bottom line:** These libraries are production-tested and widely adopted. Use them instead of searching for alternatives.

@@ -3,6 +3,7 @@
 This skill was derived from agent patterns in the [Amplifier](https://github.com/microsoft/amplifier) project.
 
 **Source Repository:**
+
 - Name: Amplifier
 - URL: https://github.com/microsoft/amplifier
 - Commit: 2adb63f858e7d760e188197c8e8d4c1ef721e2a6
@@ -11,6 +12,7 @@ This skill was derived from agent patterns in the [Amplifier](https://github.com
 ## Skills Derived from Amplifier Agents
 
 **From knowledge-archaeologist agent:**
+
 - tracing-knowledge-lineages - Understanding how ideas evolved over time to find old solutions for new problems and avoid repeating past failures
 
 ## What Was Adapted

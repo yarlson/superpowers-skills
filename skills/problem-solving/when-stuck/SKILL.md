@@ -54,16 +54,16 @@ digraph stuck_dispatch {
 
 ## Stuck-Type → Technique
 
-| How You're Stuck | Use This Skill |
-|------------------|----------------|
-| **Complexity spiraling** - Same thing 5+ ways, growing special cases | skills/problem-solving/simplification-cascades |
-| **Need innovation** - Conventional solutions inadequate, can't find fitting approach | skills/problem-solving/collision-zone-thinking |
-| **Recurring patterns** - Same issue different places, reinventing wheels | skills/problem-solving/meta-pattern-recognition |
-| **Forced by assumptions** - "Must be done this way", can't question premise | skills/problem-solving/inversion-exercise |
-| **Scale uncertainty** - Will it work in production? Edge cases unclear? | skills/problem-solving/scale-game |
-| **Code broken** - Wrong behavior, test failing, unexpected output | skills/debugging/systematic-debugging |
-| **Multiple independent problems** - Can parallelize investigation | skills/collaboration/dispatching-parallel-agents |
-| **Root cause unknown** - Symptom clear, cause hidden | skills/debugging/root-cause-tracing |
+| How You're Stuck                                                                     | Use This Skill                                   |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| **Complexity spiraling** - Same thing 5+ ways, growing special cases                 | skills/problem-solving/simplification-cascades   |
+| **Need innovation** - Conventional solutions inadequate, can't find fitting approach | skills/problem-solving/collision-zone-thinking   |
+| **Recurring patterns** - Same issue different places, reinventing wheels             | skills/problem-solving/meta-pattern-recognition  |
+| **Forced by assumptions** - "Must be done this way", can't question premise          | skills/problem-solving/inversion-exercise        |
+| **Scale uncertainty** - Will it work in production? Edge cases unclear?              | skills/problem-solving/scale-game                |
+| **Code broken** - Wrong behavior, test failing, unexpected output                    | skills/debugging/systematic-debugging            |
+| **Multiple independent problems** - Can parallelize investigation                    | skills/collaboration/dispatching-parallel-agents |
+| **Root cause unknown** - Symptom clear, cause hidden                                 | skills/debugging/root-cause-tracing              |
 
 ## Process
 

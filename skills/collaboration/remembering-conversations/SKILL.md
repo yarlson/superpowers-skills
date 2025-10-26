@@ -18,12 +18,14 @@ Search archived conversations using semantic similarity or exact text matching.
 ## When to Use
 
 **Search when:**
+
 - Your human partner mentions "we discussed this before"
 - Debugging similar issues
 - Looking for architectural decisions or patterns
 - Before implementing something familiar
 
 **Don't search when:**
+
 - Info in current conversation
 - Question about current codebase (use Grep/Read)
 
@@ -38,6 +40,7 @@ Search archived conversations using semantic similarity or exact text matching.
 **Tool:** `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/remembering-conversations/tool/search-conversations`
 
 **Modes:**
+
 ```bash
 search-conversations "query"              # Vector similarity (default)
 search-conversations --text "exact"       # Exact string match
@@ -45,6 +48,7 @@ search-conversations --both "query"       # Both modes
 ```
 
 **Flags:**
+
 ```bash
 --after YYYY-MM-DD    # Filter by date
 --before YYYY-MM-DD   # Filter by date
@@ -53,6 +57,7 @@ search-conversations --both "query"       # Both modes
 ```
 
 **Examples:**
+
 ```bash
 # Semantic search
 search-conversations "React Router authentication errors"

@@ -13,6 +13,7 @@ languages: go
 Write Go code that is simple, explicit, and idiomatic. Go values clarity over cleverness, composition over inheritance, and explicit error handling over exceptions.
 
 **Core Philosophy:**
+
 - Simplicity beats cleverness
 - Explicit beats implicit (especially errors)
 - Composition beats inheritance
@@ -20,16 +21,16 @@ Write Go code that is simple, explicit, and idiomatic. Go values clarity over cl
 
 ## Quick Reference
 
-| Pattern | Idiomatic | Anti-pattern |
-|---------|-----------|--------------|
-| **Error handling** | `if err != nil { return fmt.Errorf("context: %w", err) }` | `panic()`, ignoring errors |
-| **Nil checks** | `if obj == nil { return }` | Assuming non-nil |
-| **Constructors** | `func NewThing() *Thing` | Exported uninitialized structs |
-| **Interfaces** | Accept interfaces, return concrete types | Return interfaces |
-| **Interface location** | Consumer defines near usage | Producer exports in same package |
-| **Goroutines** | For I/O, with bounded concurrency | For CPU work without limits |
-| **Imports** | stdlib → external → internal (grouped) | Random ordering, no grouping |
-| **Testing** | Use testify for assertions/mocks | stdlib testing package |
+| Pattern                | Idiomatic                                                 | Anti-pattern                     |
+| ---------------------- | --------------------------------------------------------- | -------------------------------- |
+| **Error handling**     | `if err != nil { return fmt.Errorf("context: %w", err) }` | `panic()`, ignoring errors       |
+| **Nil checks**         | `if obj == nil { return }`                                | Assuming non-nil                 |
+| **Constructors**       | `func NewThing() *Thing`                                  | Exported uninitialized structs   |
+| **Interfaces**         | Accept interfaces, return concrete types                  | Return interfaces                |
+| **Interface location** | Consumer defines near usage                               | Producer exports in same package |
+| **Goroutines**         | For I/O, with bounded concurrency                         | For CPU work without limits      |
+| **Imports**            | stdlib → external → internal (grouped)                    | Random ordering, no grouping     |
+| **Testing**            | Use testify for assertions/mocks                          | stdlib testing package           |
 
 ## Import Organization
 
@@ -199,6 +200,7 @@ srv := NewServer(":8080", WithTimeout(60*time.Second))
 ## Performance Quick Wins
 
 **Pointer vs Value:**
+
 - Use pointers for large structs (>64 bytes) or when mutation needed
 - Use values for small structs (primitives, time.Time)
 - Methods that modify: pointer receivers
@@ -247,6 +249,7 @@ for _, s := range items {
 ### HTTP Servers
 
 **Decision tree:**
+
 - Small projects, simple routing → `net/http` (stdlib)
 - Production APIs, complex routing, middleware → `github.com/gin-gonic/gin`
 
@@ -351,17 +354,17 @@ slog.Error("failed to save user", "error", err)
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| Goroutine leaks | Always close channels, use context for cancellation |
-| Pointer to loop variable | Copy: `item := item` before goroutine (Go <1.22) |
+| Mistake                          | Fix                                                          |
+| -------------------------------- | ------------------------------------------------------------ |
+| Goroutine leaks                  | Always close channels, use context for cancellation          |
+| Pointer to loop variable         | Copy: `item := item` before goroutine (Go <1.22)             |
 | Ignoring deferred Close() errors | `defer func() { if err := f.Close(); err != nil { ... } }()` |
-| Overusing `init()` | Use explicit constructors instead |
-| Using `any` everywhere | Use concrete types or generics |
-| Not running `go fmt` | Set up editor to format on save |
-| Not checking race conditions | Run `go test -race` regularly |
-| Using stdlib `testing` | Use `testify` for better assertions |
-| Using `gomock` | Use `moq` instead (simpler, generates real code) |
+| Overusing `init()`               | Use explicit constructors instead                            |
+| Using `any` everywhere           | Use concrete types or generics                               |
+| Not running `go fmt`             | Set up editor to format on save                              |
+| Not checking race conditions     | Run `go test -race` regularly                                |
+| Using stdlib `testing`           | Use `testify` for better assertions                          |
+| Using `gomock`                   | Use `moq` instead (simpler, generates real code)             |
 
 ## Context Propagation
 
@@ -378,6 +381,7 @@ func (s *Service) GetUser(id int) (*User, error) { ... }
 ```
 
 **Use context for:**
+
 - Request-scoped values (trace IDs, user info)
 - Cancellation signals
 - Timeouts
@@ -406,6 +410,7 @@ defer f.Close()  // Always runs when function exits
 ## Reference Documentation
 
 For detailed information:
+
 - **Standard library patterns:** See `@go-stdlib.md`
 - **Tooling (go mod, test, fmt, lint):** See `@go-tooling.md`
 - **Ecosystem libraries:** See `@go-ecosystem.md`
@@ -413,6 +418,7 @@ For detailed information:
 ## Real-World Impact
 
 Following these patterns results in:
+
 - Code that other Go developers immediately understand
 - Fewer bugs from error handling and nil panics
 - Better performance from proper allocation patterns

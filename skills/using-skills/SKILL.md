@@ -15,7 +15,6 @@ version: 4.0.2
 
 3. **Create TodoWrite todos for checklists.** Mental tracking = steps get skipped. Every time.
 
-
 ## Mandatory Workflow: Before ANY Task
 
 **1. Check skills list** at session start, or run `find-skills [PATTERN]` to filter.
@@ -28,6 +27,7 @@ version: 4.0.2
 - Follow it exactly
 
 **Don't rationalize:**
+
 - "I remember this skill" - Skills evolve. Read the current version.
 - "Session-start showed it to me" - That was using-skills/SKILL.md only. Read the actual skill.
 - "This doesn't count as a task" - It counts. Find and read skills.
@@ -41,6 +41,7 @@ If a skill for your task exists, you must use it or you will fail at your task.
 If a skill has a checklist, YOU MUST create TodoWrite todos for EACH item.
 
 **Don't:**
+
 - Work through checklist mentally
 - Skip creating todos "to save time"
 - Batch multiple items into one todo
@@ -57,6 +58,7 @@ After you've read a skill with Read tool, announce you're using it:
 "I've read the [Skill Name] skill and I'm using it to [what you're doing]."
 
 **Examples:**
+
 - "I've read the Brainstorming skill and I'm using it to refine your idea into a design."
 - "I've read the Test-Driven Development skill and I'm using it to implement this feature."
 - "I've read the Systematic Debugging skill and I'm using it to find the root cause."
@@ -92,6 +94,7 @@ Your human partner's specific instructions describe WHAT to do, not HOW.
 ## Summary
 
 **Starting any task:**
+
 1. Run find-skills to check for relevant skills
 2. If relevant skill exists → Use Read tool with full path (includes /SKILL.md)
 3. Announce you're using it

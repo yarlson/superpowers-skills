@@ -3,6 +3,7 @@
 These skills were derived from agent patterns in the [Amplifier](https://github.com/microsoft/amplifier) project.
 
 **Source Repository:**
+
 - Name: Amplifier
 - URL: https://github.com/microsoft/amplifier
 - Commit: 2adb63f858e7d760e188197c8e8d4c1ef721e2a6
@@ -11,6 +12,7 @@ These skills were derived from agent patterns in the [Amplifier](https://github.
 ## Skills Derived from Amplifier Agents
 
 **From insight-synthesizer agent:**
+
 - simplification-cascades - Finding insights that eliminate multiple components
 - collision-zone-thinking - Forcing unrelated concepts together for breakthroughs
 - meta-pattern-recognition - Spotting patterns across 3+ domains
@@ -18,12 +20,15 @@ These skills were derived from agent patterns in the [Amplifier](https://github.
 - scale-game - Testing at extremes to expose fundamental truths
 
 **From ambiguity-guardian agent:**
+
 - (architecture) preserving-productive-tensions - Preserving multiple valid approaches
 
 **From knowledge-archaeologist agent:**
+
 - (research) tracing-knowledge-lineages - Understanding how ideas evolved
 
 **Dispatch pattern:**
+
 - when-stuck - Maps stuck-symptoms to appropriate technique
 
 ## What Was Adapted

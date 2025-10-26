@@ -23,19 +23,19 @@ fmt.Fprintf(w, "Status: %d\n", 200)
 
 ### Common Verbs
 
-| Verb | Type | Example |
-|------|------|---------|
-| `%v` | Default format | `fmt.Printf("%v", user)` |
-| `%+v` | Struct with field names | `fmt.Printf("%+v", user)` |
-| `%#v` | Go syntax | `fmt.Printf("%#v", user)` |
-| `%T` | Type | `fmt.Printf("%T", user)` |
-| `%s` | String | `fmt.Printf("%s", name)` |
-| `%d` | Integer | `fmt.Printf("%d", count)` |
-| `%f` | Float | `fmt.Printf("%.2f", price)` |
-| `%t` | Boolean | `fmt.Printf("%t", active)` |
-| `%p` | Pointer | `fmt.Printf("%p", &user)` |
-| `%q` | Quoted string | `fmt.Printf("%q", str)` |
-| `%w` | Wrap error | `fmt.Errorf("failed: %w", err)` |
+| Verb  | Type                    | Example                         |
+| ----- | ----------------------- | ------------------------------- |
+| `%v`  | Default format          | `fmt.Printf("%v", user)`        |
+| `%+v` | Struct with field names | `fmt.Printf("%+v", user)`       |
+| `%#v` | Go syntax               | `fmt.Printf("%#v", user)`       |
+| `%T`  | Type                    | `fmt.Printf("%T", user)`        |
+| `%s`  | String                  | `fmt.Printf("%s", name)`        |
+| `%d`  | Integer                 | `fmt.Printf("%d", count)`       |
+| `%f`  | Float                   | `fmt.Printf("%.2f", price)`     |
+| `%t`  | Boolean                 | `fmt.Printf("%t", active)`      |
+| `%p`  | Pointer                 | `fmt.Printf("%p", &user)`       |
+| `%q`  | Quoted string           | `fmt.Printf("%q", str)`         |
+| `%w`  | Wrap error              | `fmt.Errorf("failed: %w", err)` |
 
 ## strings (String Manipulation)
 
@@ -572,6 +572,7 @@ matches := re.FindStringSubmatch("user@example.com")
 ## Summary
 
 The Go standard library is comprehensive and production-ready. Prefer stdlib over external libraries when:
+
 - Performance is not critical
 - Functionality is covered
 - Simplicity is preferred

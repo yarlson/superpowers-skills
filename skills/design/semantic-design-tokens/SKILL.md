@@ -16,11 +16,13 @@ Using CSS variables is NOT enough. The three-layer architecture is what makes to
 ## When to Use
 
 **Use this for ALL UI styling work:**
+
 - Building landing pages, web apps, or any styled interface
 - Creating component libraries or design systems
 - Setting up project styles from scratch
 
 **Symptoms you're violating this:**
+
 - Hardcoded hex colors or pixel values in component styles
 - CSS variables without clear base → semantic → component hierarchy
 - Mixing primitives (`#6366f1`) directly with semantic names
@@ -137,11 +139,11 @@ Component-specific values derived from semantics.
 
 ## Quick Reference
 
-| Layer | Purpose | Example | References |
-|-------|---------|---------|------------|
-| **Base** | Raw primitives | `--color-gray-500`, `--space-4` | Nothing (literal values) |
-| **Semantic** | Design intent | `--text-primary`, `--brand-accent` | Base tokens only |
-| **Component** | Contextual styling | `--button-bg`, `--card-shadow` | Semantic tokens only |
+| Layer         | Purpose            | Example                            | References               |
+| ------------- | ------------------ | ---------------------------------- | ------------------------ |
+| **Base**      | Raw primitives     | `--color-gray-500`, `--space-4`    | Nothing (literal values) |
+| **Semantic**  | Design intent      | `--text-primary`, `--brand-accent` | Base tokens only         |
+| **Component** | Contextual styling | `--button-bg`, `--card-shadow`     | Semantic tokens only     |
 
 **Flow: Base → Semantic → Component**
 
@@ -155,7 +157,7 @@ Never skip layers. Never mix layers.
   background: #3b82f6;
   padding: 12px 24px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* ❌ BAD: Base tokens directly in components */
@@ -184,29 +186,30 @@ Never skip layers. Never mix layers.
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---------|-----|
-| CSS variables without three layers | Refactor into base → semantic → component hierarchy |
-| Hardcoded values in component styles | Create base tokens, then semantic, then component |
-| Mixing primitives with semantics in :root | Separate base palette from semantic meanings |
-| "This is simpler/faster" rationalization | Structure pays off at scale - always use three layers |
-| Using base tokens directly in components | Always go through semantic → component layers |
-| One-dimensional shadow/spacing | Create full scales (xs → xl) |
+| Mistake                                   | Fix                                                   |
+| ----------------------------------------- | ----------------------------------------------------- |
+| CSS variables without three layers        | Refactor into base → semantic → component hierarchy   |
+| Hardcoded values in component styles      | Create base tokens, then semantic, then component     |
+| Mixing primitives with semantics in :root | Separate base palette from semantic meanings          |
+| "This is simpler/faster" rationalization  | Structure pays off at scale - always use three layers |
+| Using base tokens directly in components  | Always go through semantic → component layers         |
+| One-dimensional shadow/spacing            | Create full scales (xs → xl)                          |
 
 ## Rationalization Table
 
-| Excuse | Reality |
-|--------|---------|
-| "CSS variables are semantic enough" | Variables without three-layer hierarchy = unscalable mess |
-| "Three layers is overkill" | Layer separation enables consistent design changes |
-| "This is faster for small projects" | Establishing tokens takes 5 minutes, saves hours later |
-| "I need flexibility to hardcode" | Tokens ARE flexibility - change once, update everywhere |
-| "Design is too simple for this" | Simplicity makes tokens easier, not unnecessary |
-| "Just using `--text-primary` is semantic" | Not if it contains `#111827` directly - needs base layer |
+| Excuse                                    | Reality                                                   |
+| ----------------------------------------- | --------------------------------------------------------- |
+| "CSS variables are semantic enough"       | Variables without three-layer hierarchy = unscalable mess |
+| "Three layers is overkill"                | Layer separation enables consistent design changes        |
+| "This is faster for small projects"       | Establishing tokens takes 5 minutes, saves hours later    |
+| "I need flexibility to hardcode"          | Tokens ARE flexibility - change once, update everywhere   |
+| "Design is too simple for this"           | Simplicity makes tokens easier, not unnecessary           |
+| "Just using `--text-primary` is semantic" | Not if it contains `#111827` directly - needs base layer  |
 
 ## Red Flags
 
 **STOP if you're doing any of these:**
+
 - Hardcoding hex colors anywhere except base layer
 - Hardcoding pixel values in component styles
 - Justifying flat variable structure with "speed" or "simplicity"

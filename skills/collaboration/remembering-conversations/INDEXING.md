@@ -5,16 +5,19 @@ Index, archive, and maintain conversations for search.
 ## Quick Start
 
 **Install auto-indexing hook:**
+
 ```bash
 ~/.claude/skills/collaboration/remembering-conversations/tool/install-hook
 ```
 
 **Index all conversations:**
+
 ```bash
 ~/.claude/skills/collaboration/remembering-conversations/tool/index-conversations
 ```
 
 **Process unindexed only:**
+
 ```bash
 ~/.claude/skills/collaboration/remembering-conversations/tool/index-conversations --cleanup
 ```
@@ -72,27 +75,30 @@ Handles existing hooks gracefully (merge or replace). Runs in background after e
 
 ## Recovery Scenarios
 
-| Situation | Command |
-|-----------|---------|
-| Missed conversations | `--cleanup` |
-| Hook didn't run | `--cleanup` |
+| Situation            | Command                    |
+| -------------------- | -------------------------- |
+| Missed conversations | `--cleanup`                |
+| Hook didn't run      | `--cleanup`                |
 | Updated conversation | `--verify` then `--repair` |
-| Corrupted database | `--rebuild` |
-| Index health check | `--verify` |
+| Corrupted database   | `--rebuild`                |
+| Index health check   | `--verify`                 |
 
 ## Troubleshooting
 
 **Hook not running:**
+
 - Check: `ls -l ~/.claude/hooks/sessionEnd` (should be executable)
 - Test: `SESSION_ID=test-$(date +%s) ~/.claude/hooks/sessionEnd`
 - Re-install: `./install-hook`
 
 **Summaries failing:**
+
 - Check API key: `echo $ANTHROPIC_API_KEY`
 - Check logs in ~/.config/superpowers/conversation-index/
 - Try manual: `./index-conversations --session <uuid>`
 
 **Search not finding results:**
+
 - Verify indexed: `./index-conversations --verify`
 - Try text search: `./search-conversations --text "exact phrase"`
 - Rebuild if needed: `./index-conversations --rebuild`
@@ -102,6 +108,7 @@ Handles existing hooks gracefully (merge or replace). Runs in background after e
 To exclude specific projects from indexing (e.g., meta-conversations), create:
 
 `~/.config/superpowers/conversation-index/exclude.txt`
+
 ```
 # One project name per line
 # Lines starting with # are comments
@@ -109,6 +116,7 @@ To exclude specific projects from indexing (e.g., meta-conversations), create:
 ```
 
 Or set env variable:
+
 ```bash
 export CONVERSATION_SEARCH_EXCLUDE_PROJECTS="project1,project2"
 ```
